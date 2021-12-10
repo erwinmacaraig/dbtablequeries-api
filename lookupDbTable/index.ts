@@ -4,6 +4,7 @@ import { DbTableOperator } from "../models/DbTableOperator";
 const httpTrigger: AzureFunction = async function (context: Context, req: HttpRequest): Promise<void> {
     let chvTableName = '';    
     let dbTableOperator = new DbTableOperator();
+    let errorMessages:Array<Object> = [];
 
     if(req.query.chvTableName || (req.body && req.body.chvTableName)) {
         chvTableName = (req.query.chvTableName || (req.body && req.body.chvTableName));        
@@ -351,12 +352,13 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
                         body: result
                     }; 
                 } else if (req.method === 'POST') {
-                    /*
-                    if (req.body. && Number.isInteger(+req.body.)) {
-                         = +req.body.
+                    let intAssessmentChoiceOptionID = 0;
+                    let chvAssessmentChoiceOption:string;                    
+                    if (req.body.intAssessmentChoiceOptionID && Number.isInteger(+req.body.intAssessmentChoiceOptionID)) {
+                        intAssessmentChoiceOptionID = +req.body.intAssessmentChoiceOptionID;
                     }
-                    if (req.body. && (req.body. as string).trim().length > 0) {
-                         = (req.body. as string).trim();
+                    if (req.body.chvAssessmentChoiceOption && (req.body.chvAssessmentChoiceOption as string).trim().length > 0) {
+                        chvAssessmentChoiceOption = (req.body.chvAssessmentChoiceOption as string).trim();
                     } else {
                         context.res = {
                             status: 400,
@@ -364,9 +366,14 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
                         };
                         return;
                     }
-                    */
+                    
                     try {
-
+                        await dbTableOperator.upsertAssessmentChoiceOption(intAssessmentChoiceOptionID,chvAssessmentChoiceOption);
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: 'Assessment Option Choice Successfully processed'
+                        }; 
                     } catch(e) {
                         context.log(e);
                         context.res = {
@@ -386,22 +393,28 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
                         body: result
                     };
                 } else if (req.method === 'POST') {
-                    /*
-                    if (req.body. && Number.isInteger(+req.body.)) {
-                         = +req.body.
+                    let intAssessmentChoiceID = 0;
+                    let chvAssessmentChoice:string;
+                    
+                    if (req.body.intAssessmentChoiceID && Number.isInteger(+req.body.intAssessmentChoiceID)) {
+                        intAssessmentChoiceID = +req.body.intAssessmentChoiceID;
                     }
-                    if (req.body. && (req.body. as string).trim().length > 0) {
-                         = (req.body. as string).trim();
+                    if (req.body.chvAssessmentChoice && (req.body.chvAssessmentChoice as string).trim().length > 0) {
+                        chvAssessmentChoice = (req.body.chvAssessmentChoice as string).trim();
                     } else {
                         context.res = {
                             status: 400,
                             body: 'Invalid  Information'
                         };
                         return;
-                    }
-                    */
+                    }                    
                     try {
-
+                        await dbTableOperator.upsertAssessmentChoice(intAssessmentChoiceID, chvAssessmentChoice);
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: 'Assessment Choice Option Successfully processed'
+                        }; 
                     } catch(e) {
                         context.log(e);
                         context.res = {
@@ -422,22 +435,87 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
                         body: result
                     };
                 } else if (req.method === 'POST') {
-                    /*
-                    if (req.body. && Number.isInteger(+req.body.)) {
-                         = +req.body.
+                    let intAssessmentSchemaDetailID = 0;
+                    let intTableID = 0;
+                    let intColumnID = 0;
+                    let chvSelectStoredProcedure:string;
+                    let chvUpsertStoredProcedure:string;  
+                    let chvProfilePage:string;                  
+                    let intPersonID = 0;
+
+                    if (req.body.intAssessmentSchemaDetailID && Number.isInteger(+req.body.intAssessmentSchemaDetailID)) {
+                        intAssessmentSchemaDetailID = +req.body.intAssessmentSchemaDetailID;
                     }
-                    if (req.body. && (req.body. as string).trim().length > 0) {
-                         = (req.body. as string).trim();
+
+                    if (req.body.chvProfilePage && (req.body.chvProfilePage as string).trim().length > 0) {
+                        chvProfilePage = (req.body.chvProfilePage as string).trim();
                     } else {
+                        errorMessages.push({
+                            error: "Invalid chvProfilePage submitted"
+                        });
+                    }
+                    if (req.body.chvSelectStoredProcedure && (req.body.chvSelectStoredProcedure as string).trim().length > 0) {
+                        chvSelectStoredProcedure = (req.body.chvSelectStoredProcedure as string).trim();
+                    } else {
+                        errorMessages.push({
+                            error: "Invalid chvSelectStoredProcedure submitted"
+                        });
+                    }
+                    if (req.body.chvUpsertStoredProcedure && (req.body.chvUpsertStoredProcedure as string).trim().length > 0) {
+                        chvUpsertStoredProcedure = (req.body.chvUpsertStoredProcedure as string).trim();
+                    } else {
+                        errorMessages.push({
+                            error: "Invalid chvUpsertStoredProcedure submitted"
+                        });
+                    }
+                    if (req.body.intTableID && Number.isInteger(+req.body.intTableID) && +req.body.intTableID > 0) {
+                        intTableID = +req.body.intTableID;
+                    } else {
+                        errorMessages.push({
+                            error: "Invalid intTableID submitted"
+                        });
+                    }
+                    if (req.body.intColumnID && Number.isInteger(+req.body.intColumnID) && +req.body.intColumnID > 0) {
+                        intColumnID = +req.body.intColumnID;
+                    } else {
+                        errorMessages.push({
+                            error: "Invalid intColumnID submitted"
+                        });
+                    }
+                    if (req.body.intPersonID && Number.isInteger(+req.body.intPersonID) && +req.body.intPersonID > 0) {
+                        intPersonID = +req.body.intPersonID;
+                    } else {
+                        errorMessages.push({
+                            error: "Invalid intPersonID submitted"
+                        });
+                    }
+
+                    if (errorMessages.length > 0) {
                         context.res = {
-                            status: 400,
-                            body: 'Invalid  Information'
+                            status: 400, 
+                            body: errorMessages,
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
                         };
                         return;
                     }
-                    */
+                    
                     try {
-
+                        await dbTableOperator.upsertAssessmentSchemaDetails(
+                            intAssessmentSchemaDetailID,
+                            intTableID,
+                            intColumnID,
+                            chvSelectStoredProcedure,
+                            chvUpsertStoredProcedure,
+                            chvProfilePage,
+                            intPersonID
+                        );
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: 'Assessment Schema Details Successfully Processed'
+                        };
                     } catch(e) {
                         context.log(e);
                         context.res = {
@@ -457,6 +535,57 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
                         body: result
                     };
                 } else if (req.method === 'POST') {
+                    let intAssessmentScoreLevelID = 0;
+                    let intAssessmentID = 0;
+                    let chvAssessmentScoreLevel:string = '';
+                    let intAssessmentScoreLevelMin = 0;
+                    let intAssessmentScoreLevelMax = 0;
+                    let intModifiedByID = 0;
+                    if (req.body.intAssessmentScoreLevelID && Number.isInteger(+req.body.intAssessmentScoreLevelID)) {
+                        intAssessmentScoreLevelID = +req.body.intAssessmentScoreLevelID;
+                   }
+                    if (req.body.intAssessmentID && Number.isInteger(+req.body.intAssessmentID)) {
+                        intAssessmentID = +req.body.intAssessmentID;
+                    } else {
+                        errorMessages.push({
+                            error: "Invalid intAssessmentID submitted"
+                        });
+                    }
+                    if (req.body.intModifiedByID && Number.isInteger(+req.body.intModifiedByID) && +req.body.intModifiedByID > 0) {
+                        intModifiedByID = +req.body.intModifiedByID;
+                    } else {
+                        errorMessages.push({
+                            error: "Invalid intModifiedByID submitted"
+                        });
+                    }
+                    if (req.body.intAssessmentScoreLevelMin && Number.isInteger(+req.body.intAssessmentScoreLevelMin)) {
+                        intAssessmentScoreLevelMin = +req.body.intAssessmentScoreLevelMin;
+                    }
+                    if (req.body.intAssessmentScoreLevelMax && Number.isInteger(+req.body.intAssessmentScoreLevelMax)) {
+                        intAssessmentScoreLevelMax = +req.body.intAssessmentScoreLevelMax;
+                    }
+                    if (req.body.chvAssessmentScoreLevel && (req.body.chvAssessmentScoreLevel as string).trim().length > 0) {
+                        chvAssessmentScoreLevel = (req.body.chvAssessmentScoreLevel as string).trim();
+                    } else {
+                        errorMessages.push({
+                            error: "Invalid chvAssessmentScoreLevel submitted"
+                        });
+                    }
+                    if (intAssessmentScoreLevelMin > intAssessmentScoreLevelMax) {
+                        errorMessages.push({
+                            error: "Invalid range intAssessmentScoreLevelMin and intAssessmentScoreLevelMax submitted"
+                        });
+                    }
+                    if (errorMessages.length > 0) {
+                        context.res = {
+                            status: 400, 
+                            body: errorMessages,
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
+                        };
+                        return;
+                    }
                     /*
                     if (req.body. && Number.isInteger(+req.body.)) {
                          = +req.body.
@@ -472,7 +601,19 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
                     }
                     */
                     try {
-
+                        await dbTableOperator.upsertAssessmentScoreLevel(
+                                intAssessmentScoreLevelID,
+                                intAssessmentID,
+                                chvAssessmentScoreLevel,
+                                intAssessmentScoreLevelMin,
+                                intAssessmentScoreLevelMax,
+                                intModifiedByID
+                            );
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: 'Assessment Score Levels Successfully Processed'
+                        };
                     } catch(e) {
                         context.log(e);
                         context.res = {
@@ -492,20 +633,54 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
                         body: result
                     };
                 } else if (req.method === 'POST') {
-                    /*
-                    if (req.body. && Number.isInteger(+req.body.)) {
-                         = +req.body.
-                    }
-                    if (req.body. && (req.body. as string).trim().length > 0) {
-                         = (req.body. as string).trim();
+                    let intAssessmentSubCategoryID = 0;
+                    let chvAssessmentSubCategory = '';
+                    let intAssessmentCategoryID = 0;
+
+                    if (req.body.intAssessmentCategoryID && Number.isInteger(+req.body.intAssessmentCategoryID) && +req.body.intAssessmentCategoryID > 0) {
+                        intAssessmentCategoryID = +req.body.intAssessmentCategoryID;
                     } else {
+                        errorMessages.push({
+                            error: 'Invalid Assessment Category ID Submitted'
+                        });
+                    }
+                    
+                    if (req.body.intAssessmentSubCategoryID && Number.isInteger(+req.body.intAssessmentSubCategoryID)) {
+                        intAssessmentSubCategoryID = +req.body.intAssessmentSubCategoryID;
+                    }
+                    if (req.body.chvAssessmentSubCategory && (req.body.chvAssessmentSubCategory as string).trim().length > 0) {
+                         chvAssessmentSubCategory = (req.body.chvAssessmentSubCategory as string).trim();
+                    } else {
+                        errorMessages.push({
+                            error: 'Invalid Assessment Category Information Submitted'
+                        });
+                    }
+                    
+                    if (errorMessages.length > 0) {
                         context.res = {
-                            status: 400,
-                            body: 'Invalid  Information'
+                            status: 400, 
+                            body: errorMessages,
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
                         };
                         return;
                     }
-                    */
+                    try {
+                        await dbTableOperator.upsertAssessmentSubCategory(intAssessmentSubCategoryID, chvAssessmentSubCategory,intAssessmentCategoryID);
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: 'Assessment SubCategory Successfully Processed'
+                        };
+                    } catch(e) {
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
 
                 }
                 break; 
@@ -532,6 +707,16 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
                         return;
                     }
                     */
+                    try {
+
+                    } catch(e) {
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
 
                 }
                 break;
@@ -558,6 +743,16 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
                         return;
                     }
                     */
+                    try {
+
+                    } catch(e) {
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
 
                 }
                 break;
@@ -584,6 +779,16 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
                         return;
                     }
                     */
+                    try {
+
+                    } catch(e) {
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
 
                 }
                 break;
@@ -596,6 +801,17 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
                         body: result
                     };
                 } else if (req.method === 'POST') {
+
+                    try {
+
+                    } catch(e) {
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
 
                 }
                 break;
@@ -624,6 +840,16 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
                 if (req.method === 'GET') {
 
                 } else if (req.method === 'POST') {
+                    try {
+
+                    } catch(e) {
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
 
                 }
                 break;
@@ -631,13 +857,34 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
                 if (req.method === 'GET') {
 
                 } else if (req.method === 'POST') {
+                    try {
+
+                    } catch(e) {
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
 
                 }
                 break;
+            //=======================================================================    
             case '':
                 if (req.method === 'GET') {
 
                 } else if (req.method === 'POST') {
+                    try {
+
+                    } catch(e) {
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
 
                 }
                 break;                                                             

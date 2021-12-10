@@ -415,6 +415,39 @@ export class DbTableOperator {
         });
     }
 
+    /**
+     * Insert/Modify record in database table tlkpAssessmentChoiceOptions
+     * @param intAssessmentChoiceOptionID 0 for new record, otherwise modify existing record
+     * @param chvAssessmentChoiceOption string data for assessment option
+     * @returns boolean true for a successful operation
+     */
+    public upsertAssessmentChoiceOption(intAssessmentChoiceOptionID = 0, chvAssessmentChoiceOption=''):Promise<boolean>{
+        return new Promise((resolve, reject) => {
+            // check input
+            if (chvAssessmentChoiceOption == null || chvAssessmentChoiceOption.trim().length == 0) {
+                reject('Invalid assessment choice option information');
+                return;
+            }
+            if (!Number.isInteger(intAssessmentChoiceOptionID)) {
+                reject('Invalid assessment category type id');
+                return;
+            }
+            const queryRequest = new sql.Request();
+            queryRequest.input('intAssessmentChoiceOptionID', sql.Int, intAssessmentChoiceOptionID);
+            queryRequest.input('chvAssessmentChoiceOption', sql.NVarChar, chvAssessmentChoiceOption);
+
+            this.pool.then(() => {
+                return queryRequest.execute('spUpsertAssessmentChoiceOption');
+            })
+            .then(() => {
+                resolve(true);
+            })
+            .catch((e) => {
+                reject(e);
+            });
+        });
+    }
+
     public getAssessmentChoices():Promise<Array<Object>>{
         return new Promise((resolve, reject) => {
             let query = `SELECT intAssessmentChoiceID, chvAssessmentChoice, FORMAT(dteAssessmentChoiceModified, 'dd-MMM-yyyy') AS dteAssessmentChoiceModified FROM tlkpAssessmentChoices ORDER BY chvAssessmentChoice;`;
@@ -429,6 +462,39 @@ export class DbTableOperator {
             }).catch(e => {
                 reject(e);
             }); 
+        });
+    }
+
+    /**
+     * Create/Modify existing database record in tlkpAssessmentChoices 
+     * @param intAssessmentChoiceID 0 for a new record otherwise modify existing record
+     * @param chvAssessmentChoice string assessment choice option
+     * @returns boolean true for a successful operation
+     */
+    public upsertAssessmentChoice(intAssessmentChoiceID=0, chvAssessmentChoice=''):Promise<boolean>{
+        return new Promise((resolve, reject) => {
+            // check input
+            if (chvAssessmentChoice == null || chvAssessmentChoice.trim().length == 0) {
+                reject('Invalid assessment choice option information');
+                return;
+            }
+            if (!Number.isInteger(intAssessmentChoiceID)) {
+                reject('Invalid assessment category type id');
+                return;
+            }
+            const queryRequest = new sql.Request();
+            queryRequest.input('intAssessmentChoiceID', sql.Int, intAssessmentChoiceID);
+            queryRequest.input('chvAssessmentChoice', sql.NVarChar, chvAssessmentChoice);
+
+            this.pool.then(() => {
+                return queryRequest.execute('spUpsertAssessmentChoice');
+            })
+            .then(() => {
+                resolve(true);
+            })
+            .catch((e) => {
+                reject(e);
+            });
         });
     }
 
@@ -449,6 +515,75 @@ export class DbTableOperator {
         });
     }
 
+    /**
+     * CREATE/UPDATE records in tblAssessmentSchemaDetails database table
+     * @param intAssessmentSchemaDetailID unique id, 0 for new record, otherwise update existing record 
+     * @param intTableID integer value for the targeted table in the existing database
+     * @param intColumnID integer value of the targeted column for the table
+     * @param chvSelectStoredProcedure stored procedure name for selecting the data
+     * @param chvUpsertStoredProcedure  stored procedure for inserting data
+     * @param chvProfilePage string data for profile name
+     * @param intPersonID  integer value of the person inserting/modifying the record
+     * @returns boolean true for a successful operation
+     */
+    public upsertAssessmentSchemaDetails(intAssessmentSchemaDetailID = 0,
+        intTableID = 0,
+        intColumnID = 0,
+        chvSelectStoredProcedure='',
+        chvUpsertStoredProcedure='',
+        chvProfilePage='',
+        intPersonID=0):Promise<boolean> {
+            return new Promise((resolve, reject) => {
+                // check input
+                if (chvSelectStoredProcedure == null || chvSelectStoredProcedure.trim().length == 0) {
+                    reject('Invalid select stored procedure information');
+                    return;
+                }
+                if (chvUpsertStoredProcedure == null || chvUpsertStoredProcedure.trim().length == 0) {
+                    reject('Invalid upsert stored procedure information');
+                    return;
+                }
+                if (chvProfilePage == null || chvProfilePage.trim().length == 0) {
+                    reject('Invalid profile page information');
+                    return;
+                }
+                if (!Number.isInteger(intAssessmentSchemaDetailID)) {
+                    reject('Invalid assessment schema detail id');
+                    return;
+                }
+                if (!Number.isInteger(intTableID) && !intTableID) {
+                    reject('Invalid table id');
+                    return;
+                }
+                if (!Number.isInteger(intColumnID) && !intColumnID) {
+                    reject('Invalid column id');
+                    return;
+                }
+                if (!Number.isInteger(intPersonID) && !intPersonID) {
+                    reject('Invalid person id');
+                    return;
+                }
+                const queryRequest = new sql.Request();
+                queryRequest.input('intAssessmentSchemaDetailID', sql.Int, intAssessmentSchemaDetailID);
+                queryRequest.input('intTableID', sql.Int, intTableID);
+                queryRequest.input('intColumnID', sql.Int, intColumnID);
+                queryRequest.input('chvSelectStoredProcedure', sql.NVarChar, chvSelectStoredProcedure);
+                queryRequest.input('chvUpsertStoredProcedure', sql.NVarChar, chvUpsertStoredProcedure);
+                queryRequest.input('chvProfilePage', sql.NVarChar, chvProfilePage);
+                queryRequest.input('intModifiedByID', sql.Int, intPersonID);
+    
+                this.pool.then(() => {
+                    return queryRequest.execute('spUpsertAssessmentSchemaDetails');
+                })
+                .then(() => {
+                    resolve(true);
+                })
+                .catch((e) => {
+                    reject(e);
+                });
+            });
+        }
+ 
     public getAssessmentScoreLevels():Promise<Array<Object>>{
         return new Promise((resolve, reject) => {
             let query = `SELECT intAssessmentScoreLevelID, intAssessmentID, chvAssessmentTitle, chvAssessmentScoreLevel, intAssessmentScoreLevelMin, intAssessmentScoreLevelMax, FORMAT(dteAssessmentScoreLevelModified, 'dd-MMM-yyyy') AS dteAssessmentScoreLevelModified, intAssessmentScoreLevelModifiedByID FROM vwAssessmentScoreLevels;`;
@@ -466,6 +601,66 @@ export class DbTableOperator {
         });
     }
 
+    /**
+     * CREATE/UPDATE record in tblAssessmentScoreLevels database table
+     * @param intAssessmentScoreLevelID 0 for new record other update existing record
+     * @param intAssessmentID integer value referring to tblAssessments.intAssessmentID 
+     * @param chvAssessmentScoreLevel string information for assessment score level
+     * @param intAssessmentScoreLevelMin minimum integer value for assessment score level
+     * @param intAssessmentScoreLevelMax maximum integer value for assessment score level
+     * @param intModifiedByID integer value referring to tblPersons.intPersonID
+     * @returns boolean true for successful operation
+     */
+    public upsertAssessmentScoreLevel(intAssessmentScoreLevelID=0,
+        intAssessmentID=0,
+        chvAssessmentScoreLevel='',
+        intAssessmentScoreLevelMin=0,
+        intAssessmentScoreLevelMax=0,
+        intModifiedByID=0):Promise<boolean>{
+            return new Promise((resolve, reject) => {
+                if (chvAssessmentScoreLevel == null || chvAssessmentScoreLevel.trim().length == 0) {
+                    reject('Invalid assessment score level information');
+                    return;
+                }
+                if (!Number.isInteger(intAssessmentID) && !intAssessmentID) {
+                    reject('Invalid assessment id');
+                    return;
+                }
+                if (!Number.isInteger(intModifiedByID) && !intModifiedByID) {
+                    reject('Invalid modified by id');
+                    return;
+                }
+                if (!Number.isInteger(intAssessmentScoreLevelID)) {
+                    reject('Invalid assessment score level id');
+                    return;
+                }
+                if (!Number.isInteger(intAssessmentScoreLevelMin)) {
+                    reject('Invalid assessment score level min');
+                    return;
+                }
+                if (!Number.isInteger(intAssessmentScoreLevelMax)) {
+                    reject('Invalid assessment score level max');
+                    return;
+                }
+                const queryRequest = new sql.Request();
+                queryRequest.input('intAssessmentScoreLevelID', sql.Int, intAssessmentScoreLevelID);
+                queryRequest.input('intAssessmentID', sql.Int, intAssessmentID);
+                queryRequest.input('chvAssessmentScoreLevel', sql.NVarChar, chvAssessmentScoreLevel);
+                queryRequest.input('intAssessmentScoreLevelMin', sql.Int, intAssessmentScoreLevelMin);                
+                queryRequest.input('intAssessmentScoreLevelMax', sql.Int, intAssessmentScoreLevelMax);                
+                queryRequest.input('intModifiedByID', sql.Int, intModifiedByID);
+                this.pool.then(() => {
+                    return queryRequest.execute('spUpsertAssessmentScoreLevel');
+                })
+                .then(() => {
+                    resolve(true);
+                })
+                .catch((e) => {
+                    reject(e);
+                });
+            });
+        }
+
     public getAssessmentSubCategories():Promise<Array<Object>>{
         return new Promise((resolve, reject) => {
             let query = `SELECT intAssessmentSubCategoryID, chvAssessmentSubCategory, intAssessmentCategoryID, chvAssessmentCategory, FORMAT(GetDate(), 'dd-MMM-yyyy') AS dteAssessmentSubCategoryModified FROM vwAssessmentSubCategories`;
@@ -480,6 +675,43 @@ export class DbTableOperator {
             }).catch(e => {
                 reject(e);
             }); 
+        });
+    }
+
+    /**
+     * CREATE/UPDATE record in the tlkpAssessmentSubCategories database table
+     * @param intAssessmentSubCategoryID integer 0 for a new record, update a record otherwise
+     * @param chvAssessmentSubCategory string value information
+     * @param intAssessmentCategoryID integer value referring to tlkpAssessmentCategory.intAssessmentCategoryID
+     * @returns boolean true for a successful operation
+     */
+    public upsertAssessmentSubCategory(intAssessmentSubCategoryID = 0, chvAssessmentSubCategory = '', intAssessmentCategoryID=0):Promise<boolean>{
+        return new Promise((resolve, reject) => {
+            if (!Number.isInteger(intAssessmentSubCategoryID)) {
+                reject('Invalid assessment subcategory id');
+                return;
+            }
+            if (!Number.isInteger(intAssessmentCategoryID) && !intAssessmentCategoryID) {
+                reject('Invalid assessment category id');
+                return;
+            }
+            if (chvAssessmentSubCategory == null || chvAssessmentSubCategory.trim().length == 0) {
+                reject('Invalid assessment subcategory information');
+                return;
+            }
+            const queryRequest = new sql.Request();
+            queryRequest.input('intAssessmentSubCategoryID', sql.Int, intAssessmentSubCategoryID);            
+            queryRequest.input('chvAssessmentSubCategory', sql.NVarChar, chvAssessmentSubCategory);
+            queryRequest.input('intAssessmentCategoryID', sql.Int, intAssessmentCategoryID);
+            this.pool.then(() => {
+                return queryRequest.execute('spUpsertAssessmentSubCategory');
+            })
+            .then(() => {
+                resolve(true);
+            })
+            .catch((e) => {
+                reject(e);
+            });
         });
     }
 
