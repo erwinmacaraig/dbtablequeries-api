@@ -732,6 +732,54 @@ export class DbTableOperator {
         });
     }
 
+    /**
+     * CREATE/MODIFY records in tlkpAuditPages
+     * @param intAuditPageID 0 for new record, otherwise modify existing record
+     * @param chvAuditPageName string value for the audit page name
+     * @param chvAuditSection  string value for the audit page section
+     * @param chvAuditPage string value for the audit page
+     * @returns boolean true for successful operation
+     */
+    public upsertAuditPage(intAuditPageID=0, chvAuditPageName='', chvAuditSection='', chvAuditPage=''):Promise<boolean>{
+        return new Promise((resolve, reject) => {
+            if (chvAuditPage == null || chvAuditPage.trim().length == 0) {
+                reject('Invalid audit page information');
+                return;
+            }
+            if (chvAuditPageName == null || chvAuditPageName.trim().length == 0) {
+                reject('Invalid audit page name information');
+                return;
+            }
+            if (chvAuditSection == null || chvAuditSection.trim().length == 0) {
+                reject('Invalid audit section information');
+                return;
+            }
+            
+            if (!Number.isInteger(intAuditPageID)) {
+                reject('Invalid audit page id');
+                return;
+            }
+            
+            const queryRequest = new sql.Request();
+            queryRequest.input('intAuditPageID', sql.Int, intAuditPageID);        
+            queryRequest.input('chvAuditPageName', sql.NVarChar, chvAuditPageName);
+            queryRequest.input('chvAuditSection', sql.NVarChar, chvAuditSection);
+            queryRequest.input('chvAuditPage', sql.NVarChar, chvAuditPage);       
+    
+            this.pool.then(() => {
+                return queryRequest.execute('spUpsertAuditPage');
+            })
+            .then(() => {
+                resolve(true);
+            })
+            .catch((e) => {
+                reject(e);
+            });
+        });
+        
+    
+    }
+
     public getCarePlanAreas():Promise<Array<Object>>{ 
         return new Promise((resolve, reject) => {
             let query = `SELECT intCarePlanAreaID, chvCarePlanArea, chvCarePlanAreaDescription, FORMAT(dteCarePlanAreaModified, 'dd-MMM-yyyy') AS dteCarePlanAreaModified FROM tlkpCarePlanAreas ORDER BY chvCarePlanArea;`;
@@ -747,6 +795,46 @@ export class DbTableOperator {
             }).catch(e => {
                 reject(e);
             }); 
+        });
+    }
+
+    /**
+     * Create/Modify record in tlkpCarePlanAreas database table
+     * @param intCarePlanAreaID 0 for a new record otherwise  modify existing record
+     * @param chvCarePlanArea string value for care plan area
+     * @param chvCarePlanAreaDescription optional string description
+     * @returns boolean true for successful operation
+     */
+    public upsertCarePlanAreas(intCarePlanAreaID=0, chvCarePlanArea='', chvCarePlanAreaDescription):Promise<boolean>{
+        return new Promise((resolve, reject) => {
+            if (chvCarePlanArea == null || chvCarePlanArea.trim().length == 0) {
+                reject('Invalid care plan area information');
+                return;
+            }
+            if (chvCarePlanAreaDescription == null || chvCarePlanAreaDescription.trim().length == 0) {
+                reject('Invalid audit page name information');
+                return;
+            }
+            
+            if (!Number.isInteger(intCarePlanAreaID)) {
+                reject('Invalid care plan area id');
+                return;
+            }
+            
+            const queryRequest = new sql.Request();
+            queryRequest.input('intCarePlanAreaID', sql.Int, intCarePlanAreaID);        
+            queryRequest.input('chvCarePlanArea', sql.NVarChar, chvCarePlanArea);
+            queryRequest.input('chvCarePlanAreaDescription', sql.NVarChar, chvCarePlanAreaDescription);
+    
+            this.pool.then(() => {
+                return queryRequest.execute('spUpsertCarePlanAreas');
+            })
+            .then(() => {
+                resolve(true);
+            })
+            .catch((e) => {
+                reject(e);
+            });
         });
     }
 
@@ -766,7 +854,41 @@ export class DbTableOperator {
             }); 
         });
     }
+
+    /**
+     * Create/modify record in the tlkpContactPersonFors database table
+     * @param intContactPersonForID 0 for new record, else new record
+     * @param chvContactPersonFor string value for contact personfor
+     * @returns boolean true for a successful operation
+     */
+    public upsertContactPersonFors(intContactPersonForID=0, chvContactPersonFor=''):Promise<boolean>{
+        return new Promise((resolve, reject) => {
+            if (chvContactPersonFor == null || chvContactPersonFor.trim().length == 0) {
+                reject('Invalid contact person for information');
+                return;
+            }            
+            
+            if (!Number.isInteger(intContactPersonForID)) {
+                reject('Invalid contact persons for id');
+                return;
+            }
+            
+            const queryRequest = new sql.Request();
+            queryRequest.input('intContactPersonForID', sql.Int, intContactPersonForID);        
+            queryRequest.input('chvContactPersonFor', sql.NVarChar, chvContactPersonFor);            
     
+            this.pool.then(() => {
+                return queryRequest.execute('spUpsertContactPersonFors');
+            })
+            .then(() => {
+                resolve(true);
+            })
+            .catch((e) => {
+                reject(e);
+            });
+        });
+    }
+
     public getContactPersonTypes():Promise<Array<Object>>{ 
         return new Promise((resolve, reject) => {
             let query = `SELECT intContactPersonTypeID, chvContactPersonType, FORMAT(dteContactPersonTypeModified, 'dd-MMM-yyyy') AS dteContactPersonTypeModified FROM tlkpContactPersonTypes ORDER BY chvContactPersonType;`;
@@ -784,6 +906,41 @@ export class DbTableOperator {
         });
     }
 
+    /**
+     * Create/update a record in the tlkpContactPersonTypes database table
+     * @param intContactPersonTypeID 0 for new record otherwise update existing one
+     * @param chvContactPersonType  string information for the person type
+     * @returns boolean true for a successful operation
+     */
+    public upsertContactPersonTypes(intContactPersonTypeID=0, chvContactPersonType=''):Promise<boolean>{
+        return new Promise((resolve, reject) => {
+            if (chvContactPersonType == null || chvContactPersonType.trim().length == 0) {
+                reject('Invalid contact person type information');
+                return;
+            }            
+            
+            if (!Number.isInteger(intContactPersonTypeID)) {
+                reject('Invalid contact person type id');
+                return;
+            }
+            
+            const queryRequest = new sql.Request();
+            queryRequest.input('intContactPersonTypeID', sql.Int, intContactPersonTypeID);        
+            queryRequest.input('chvContactPersonType', sql.NVarChar, chvContactPersonType);            
+    
+            this.pool.then(() => {
+                return queryRequest.execute('spUpsertContactPersonTypes');
+            })
+            .then(() => {
+                resolve(true);
+            })
+            .catch((e) => {
+                reject(e);
+            });
+        });
+    }
+
+
     public getContactSupplierFors():Promise<Array<Object>>{ 
         return new Promise((resolve, reject) => {
             let query = `SELECT intContactSupplierForID, chvContactSupplierFor, FORMAT(dteContactSupplierForModified, 'dd-MMM-yyyy') AS dteContactSupplierForModified FROM tlkpContactSupplierFors ORDER BY chvContactSupplierFor;`;
@@ -799,6 +956,436 @@ export class DbTableOperator {
                 reject(e);
             }); 
         });
+    }
+
+    /**
+     * Create/modify record in the tlkpContactSupplierFors database table
+     * @param intContactSupplierForID primary key for tlkpContactSupplierFors, 0 for new record, otherwise modify existing one
+     * @param chvContactSupplierFor string value for contact supplier
+     * @returns boolean true for successful operation
+     */
+    public upsertContactSupplierFors(intContactSupplierForID = 0, chvContactSupplierFor=''):Promise<boolean>{
+        return new Promise((resolve, reject) => {
+            if (chvContactSupplierFor == null || chvContactSupplierFor.trim().length == 0) {
+                reject('Invalid contact supplier for information');
+                return;
+            }            
+            
+            if (!Number.isInteger(intContactSupplierForID)) {
+                reject('Invalid contact supplier for id');
+                return;
+            }
+            
+            const queryRequest = new sql.Request();
+            queryRequest.input('intContactSupplierForID', sql.Int, intContactSupplierForID);        
+            queryRequest.input('chvContactSupplierFor', sql.NVarChar, chvContactSupplierFor);            
+    
+            this.pool.then(() => {
+                return queryRequest.execute('spUpsertContactSupplierFors');
+            })
+            .then(() => {
+                resolve(true);
+            })
+            .catch((e) => {
+                reject(e);
+            });
+        });
+    }
+
+    public getContactSupplierTypes():Promise<Array<Object>>{
+        return new Promise((resolve, reject) => {
+            let query = `SELECT intContactSupplierTypeID, chvContactSupplierType, FORMAT(dteContactSupplierTypeModified, 'dd-MMM-yyyy') AS dteContactSupplierTypeModified FROM tlkpContactSupplierTypes ORDER BY chvContactSupplierType;`;
+            this.pool.then(() => {
+                return sql.query(query);
+            }).then(result => {
+                if (result.recordset.length == 0) {
+                    reject('No records found');
+                    return;
+                }
+                resolve(result.recordset);
+            }).catch(e => {
+                reject(e);
+            }); 
+        });
+    }
+
+    /**
+     * Create/modify record in the tlkpContactSupplierTypes database table
+     * @param intContactSupplierTypeID primary key id, 0 for new record otherwise update existing record
+     * @param chvContactSupplierType string value for contact supplier type
+     * @returns boolean true for a successful operation
+     */
+    public upsertContactSupplierTypes(intContactSupplierTypeID=0, chvContactSupplierType=''):Promise<boolean>{
+        return new Promise((resolve, reject) => {
+            if (chvContactSupplierType == null || chvContactSupplierType.trim().length == 0) {
+                reject('Invalid contact supplier for information');
+                return;
+            }            
+            
+            if (!Number.isInteger(intContactSupplierTypeID)) {
+                reject('Invalid contact supplier for id');
+                return;
+            }
+            
+            const queryRequest = new sql.Request();
+            queryRequest.input('intContactSupplierTypeID', sql.Int, intContactSupplierTypeID);        
+            queryRequest.input('chvContactSupplierType', sql.NVarChar, chvContactSupplierType);            
+    
+            this.pool.then(() => {
+                return queryRequest.execute('spUpsertContactSupplierTypes');
+            })
+            .then(() => {
+                resolve(true);
+            })
+            .catch((e) => {
+                reject(e);
+            });
+        });
+    }
+
+    public getCountries():Promise<Array<Object>>{
+        return new Promise((resolve, reject) => {
+            let query = `SELECT intCountryID, chvCountryName, chvNationality, chvCountryFlagName, FORMAT(dteCountryModified, 'dd-MMM-yyyy') AS dteCountryModified FROM tlkpCountries ORDER BY chvCountryName;`;
+            this.pool.then(() => {
+                return sql.query(query);
+            }).then(result => {
+                if (result.recordset.length == 0) {
+                    reject('No records found');
+                    return;
+                }
+                resolve(result.recordset);
+            }).catch(e => {
+                reject(e);
+            }); 
+        });
+    }
+
+    /**
+     * Creates/updates record in tlkpCountries database table
+     * @param intCountryID primary key integer for the table
+     * @param chvCountryName the name of the country
+     * @param chvNationality nationality of the people in the country
+     * @param chvCountryFlagName flag name for the country
+     * @returns boolean true for successful operation
+     */
+    public upsertCountries(intCountryID=0, chvCountryName='', chvNationality='', chvCountryFlagName=''):Promise<boolean>{
+        return new Promise((resolve, reject) => {
+            if (chvCountryName == null || chvCountryName.trim().length == 0) {
+                reject('Invalid chvCountryName information');
+                return;
+            } 
+            if (chvNationality == null || chvNationality.trim().length == 0) {
+                reject('Invalid chvNationality information');
+                return;
+            }
+            if (chvCountryFlagName == null || chvCountryFlagName.trim().length == 0) {
+                reject('Invalid chvCountryFlagName information');
+                return;
+            }               
+            
+            if (!Number.isInteger(intCountryID)) {
+                reject('Invalid country id');
+                return;
+            }
+            
+            const queryRequest = new sql.Request();
+            queryRequest.input('intCountryID', sql.Int, intCountryID);
+            queryRequest.input('chvCountryName', sql.NVarChar, chvCountryName);   
+            queryRequest.input('chvNationality', sql.NVarChar, chvNationality);           
+            queryRequest.input('chvCountryFlagName', sql.NVarChar, chvCountryFlagName);            
+    
+            this.pool.then(() => {
+                return queryRequest.execute('spUpsertCountries');
+            })
+            .then(() => {
+                resolve(true);
+            })
+            .catch((e) => {
+                reject(e);
+            });
+        });
+    }
+
+    public getDepartments(tz=null):Promise<Array<Object>>{
+        return new Promise((resolve, reject) => {            
+            const queryRequest = new sql.Request();            
+            queryRequest.input('intTimeZone', sql.Int, tz); 
+
+            this.pool.then(() => {
+                return queryRequest.execute('spSelectDepartments');
+            })
+            .then((result) => {
+                if (result.recordset.length == 0) {
+                    reject('No records found');
+                    return;
+                }
+                resolve(result.recordset);
+            })
+            .catch((e) => {
+                reject(e);
+            });
+
+        });
+    }
+
+
+    /**
+     * Create/update record in the tblDepartments database table
+     * @param intDepartmentID primary key for tblDepartments, 0 for new record otherwise update existing record
+     * @param chvDepartmentName string value for the name of the department
+     * @param intDepartmentIsActiveID integer value, 1 for active
+     * @param intDepartmentStaffRoleID foreign key from tlkpStaffRoles.intStaffRoleID
+     * @param intDepartmentManagerID foreign key REFERENCES dbo.tblPersons (intPersonID)
+     * @param chvDepartmentTeamsURL 
+     * @param chvDepartmentEmailAddress string value of department's URL
+     * @param chvDepartmentDescription  string value for department's description
+     * @param intModifiedByID foreign key references tblPersons (intPersonID)
+     * @returns boolean true for successful operation
+     */
+    public upsertDepartment(intDepartmentID=0,
+        chvDepartmentName='',
+        intDepartmentIsActiveID=1,
+        intDepartmentStaffRoleID=0,
+        intDepartmentManagerID = 0,
+        chvDepartmentTeamsURL='',
+        chvDepartmentEmailAddress=null,
+        chvDepartmentDescription=null,
+        intModifiedByID = 0
+    ):Promise<boolean>{
+        return new Promise((resolve, reject) => {
+            let active = 1;
+            if (chvDepartmentName == null || chvDepartmentName.trim().length == 0) {
+                reject('Invalid chvDepartmentName information');
+                return;
+            } 
+            
+            if (chvDepartmentTeamsURL == null || chvDepartmentTeamsURL.trim().length == 0) {
+                reject('Invalid chvDepartmentTeamsURL information');
+                return;
+            }               
+            
+            if (!Number.isInteger(intDepartmentID)) {
+                reject('Invalid department id');
+                return;
+            }
+            if (!Number.isInteger(intDepartmentStaffRoleID) || intDepartmentStaffRoleID <= 0 ) {
+                reject('Invalid intDepartmentStaffRoleID');
+                return;
+            }
+            if (!Number.isInteger(intDepartmentManagerID) || intDepartmentManagerID <= 0 ) {
+                reject('Invalid intDepartmentManagerID');
+                return;
+            }
+            if (!Number.isInteger(intModifiedByID) || intModifiedByID <= 0 ) {
+                reject('Invalid intModifiedByID');
+                return;
+            }
+
+            if (Number.isInteger(intDepartmentIsActiveID) && intDepartmentIsActiveID > 0) {
+                active = 1;
+            } else {
+                active = 0;
+            }
+            const queryRequest = new sql.Request();
+            queryRequest.input('intDepartmentID', sql.Int, intDepartmentID);
+            queryRequest.input('chvDepartmentName', sql.NVarChar, chvDepartmentName);
+            queryRequest.input('intDepartmentIsActiveID', sql.Int, active);   
+            queryRequest.input('intDepartmentStaffRoleID', sql.Int, intDepartmentStaffRoleID);            
+            queryRequest.input('intDepartmentManagerID', sql.Int, intDepartmentManagerID); 
+            queryRequest.input('chvDepartmentTeamsURL', sql.NVarChar, chvDepartmentTeamsURL); 
+            queryRequest.input('chvDepartmentEmailAddress', sql.NVarChar, chvDepartmentEmailAddress); 
+            queryRequest.input('chvDepartmentDescription', sql.NVarChar, chvDepartmentDescription); 
+            queryRequest.input('intModifiedByID', sql.Int, intModifiedByID);
+            this.pool.then(() => {
+                return queryRequest.execute('spUpsertDepartment');
+            })
+            .then(() => {
+                resolve(true);
+            })
+            .catch((e) => {
+                reject(e);
+            });
+        });
+
+    }
+
+    public getEmploymentClassifications():Promise<Array<Object>>{
+        return new Promise((resolve, reject) => {
+            let query = `SELECT intEmploymentClassificationID, chvEmploymentClassification, chvEmploymentClassificationAbrv, FORMAT(dteEmploymentClassificationModified, 'dd-MMM-yyyy') AS dteEmploymentClassificationModified FROM tlkpEmploymentClassifications ORDER BY chvEmploymentClassification;`;
+            this.pool.then(() => {
+                return sql.query(query);
+            }).then((result) => {
+                if (result.recordset.length == 0) {
+                    reject('No records found');
+                    return;
+                }
+                resolve(result.recordset);
+            }).catch(e => {
+                reject(e);
+            }); 
+        });
+    }
+
+    /**
+     * creates/updates record in tlkpEmploymentClassifications database table
+     * @param intEmploymentClassificationID primary key integer, 0 for new record otherwise update existing record
+     * @param chvEmploymentClassification string value for employment classification
+     * @param chvEmploymentClassificationAbrv string value abbreviate for employment classification
+     * @returns boolean true for successful operation
+     */
+    public upsertEmploymentClassification(intEmploymentClassificationID=0, chvEmploymentClassification='', chvEmploymentClassificationAbrv=''):Promise<boolean>{
+        return new Promise((resolve, reject) => {
+            if (chvEmploymentClassification == null || chvEmploymentClassification.trim().length == 0) {
+                reject('Invalid chvEmploymentClassification information');
+                return;
+            }          
+            if (chvEmploymentClassificationAbrv == null || chvEmploymentClassificationAbrv.trim().length == 0) {
+                reject('Invalid chvEmploymentClassificationAbrv information');
+                return;
+            } 
+
+            
+            if (!Number.isInteger(intEmploymentClassificationID)) {
+                reject('Invalid intEmploymentClassificationID');
+                return;
+            }
+            
+            const queryRequest = new sql.Request();
+            queryRequest.input('intEmploymentClassificationID', sql.Int, intEmploymentClassificationID);        
+            queryRequest.input('chvEmploymentClassification', sql.NVarChar, chvEmploymentClassification);            
+            queryRequest.input('chvEmploymentClassificationAbrv', sql.NVarChar, chvEmploymentClassificationAbrv);            
+    
+            this.pool.then(() => {
+                return queryRequest.execute('spUpsertEmploymentClassification');
+            })
+            .then(() => {
+                resolve(true);
+            })
+            .catch((e) => {
+                reject(e);
+            });
+        });
+    }
+
+    public getEmploymentTypes():Promise<Array<Object>>{
+        return new Promise((resolve, reject) => {
+            let query = `SELECT intEmploymentTypeID, chvEmploymentType, intEmploymentClassificationID, chvEmploymentClassification, chvEmploymentClassificationAbrv, intGrade, FORMAT(dteEmploymentTypeModified, 'dd-MMM-yyyy') AS dteEmploymentTypeModified FROM vwEmploymentTypes;`;
+            this.pool.then(() => {
+                return sql.query(query);
+            }).then((result) => {
+                if (result.recordset.length == 0) {
+                    reject('No records found');
+                    return;
+                }
+                resolve(result.recordset);
+            }).catch(e => {
+                reject(e);
+            }); 
+        });
+    }
+
+    /**
+     * 
+     * @param intEmploymentTypeID primary key, 0 for new record otherwise update existing record
+     * @param intEmploymentClassificationID foreign key references tlkpEmploymentClassifications (intEmploymentClassificationID)
+     * @param chvEmploymentType string value employment type
+     * @param intGrade integer grade value
+     * @returns boolean true for a successful operation
+     */
+    public upsertEmploymentType(intEmploymentTypeID=0, intEmploymentClassificationID=0, chvEmploymentType='', intGrade=0):Promise<boolean>{
+        return new Promise((resolve, reject) => {
+            if (chvEmploymentType == null || chvEmploymentType.trim().length == 0) {
+                reject('Invalid chvEmploymentType information');
+                return;
+            }          
+            
+            if (!Number.isInteger(intEmploymentTypeID)) {
+                reject('Invalid intEmploymentTypeID');
+                return;
+            }
+            
+            if (!Number.isInteger(intEmploymentClassificationID)) {
+                reject('Invalid intEmploymentClassificationID');
+                return;
+            }
+
+            if (!Number.isInteger(intGrade)) {
+                reject('Invalid intGrade');
+                return;
+            }
+
+            const queryRequest = new sql.Request();
+            queryRequest.input('intEmploymentTypeID', sql.Int, intEmploymentTypeID);        
+            queryRequest.input('intEmploymentClassificationID', sql.Int, intEmploymentClassificationID);
+            queryRequest.input('chvEmploymentType', sql.NVarChar, chvEmploymentType);            
+            queryRequest.input('intGrade', sql.Int, intGrade); 
+    
+            this.pool.then(() => {
+                return queryRequest.execute('spUpsertEmploymentType');
+            })
+            .then(() => {
+                resolve(true);
+            })
+            .catch((e) => {
+                reject(e);
+            });
+        });
+    }
+
+    public getFileGroups():Promise<Array<Object>>{
+        return new Promise((resolve, reject) => {
+            let query = `SELECT intFileGroupID, chvFileGroupName, FORMAT(dteFileGroupModified, 'dd-MMM-yyyy') AS dteFileGroupModified FROM tlkpFileGroups ORDER BY chvFileGroupName;`;
+            this.pool.then(() => {
+                return sql.query(query);
+            }).then((result) => {
+                if (result.recordset.length == 0) {
+                    reject('No records found');
+                    return;
+                }
+                resolve(result.recordset);
+            }).catch(e => {
+                reject(e);
+            }); 
+        });
+    }
+
+    /**
+     * Create/update record in tlkpFileGroups database table
+     * @param intFileGroupID prinary key for table tlkpFileGroups, 0 for new record, update existing record otherwise
+     * @param chvFileGroupName string value for file group name
+     * @returns boolean true for a successful operation
+     */
+    public upsertFileGroups(intFileGroupID = 0, chvFileGroupName = ''):Promise<boolean>{
+        return new Promise((resolve, reject) => {
+            if (chvFileGroupName == null || chvFileGroupName.trim().length == 0) {
+                reject('Invalid chvFileGroupName information');
+                return;
+            }
+
+            if (!Number.isInteger(intFileGroupID)) {
+                reject('Invalid intFileGroupID');
+                return;
+            }
+
+            const queryRequest = new sql.Request();
+            queryRequest.input('intFileGroupID', sql.Int, intFileGroupID);           
+            queryRequest.input('chvFileGroupName', sql.NVarChar, chvFileGroupName); 
+            queryRequest.input('chvFileGroupDescription', sql.NVarChar, null); 
+            queryRequest.input('chvFileGroupIcon', sql.NVarChar, null);
+            
+
+            this.pool.then(() => {
+                return queryRequest.execute('spUpsertFileGroups');
+            })
+            .then(() => {
+                resolve(true);
+            })
+            .catch((e) => {
+                reject(e);
+            });
+
+        });
+
     }
 
     /**

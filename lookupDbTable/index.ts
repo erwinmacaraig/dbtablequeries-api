@@ -693,21 +693,47 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
                         body: result
                     };
                 } else if (req.method === 'POST') {
-                    /*
-                    if (req.body. && Number.isInteger(+req.body.)) {
-                         = +req.body.
+                    let intAuditPageID = 0;
+                    let chvAuditPageName:string;
+                    let chvAuditSection: string;
+                    let chvAuditPage:string;
+                    if (req.body.intAuditPageID && Number.isInteger(+req.body.intAuditPageID)) {
+                        intAuditPageID = +req.body.intAuditPageID;
                     }
-                    if (req.body. && (req.body. as string).trim().length > 0) {
-                         = (req.body. as string).trim();
+                    if (req.body.chvAuditPageName && (req.body.chvAuditPageName as string).trim().length > 0) {
+                        chvAuditPageName = (req.body.chvAuditPageName as string).trim();
                     } else {
+                        errorMessages.push({
+                            error: "Invalid chvAuditPageName submitted"
+                        });
+                    }
+                    if (req.body.chvAuditSection && (req.body.chvAuditSection as string).trim().length > 0) {
+                        chvAuditSection = (req.body.chvAuditSection as string).trim();
+                    } else {
+                        errorMessages.push({
+                            error: "Invalid chvAuditSection submitted"
+                        }); 
+                    }
+                    if (req.body.chvAuditPage && (req.body.chvAuditPage as string).trim().length > 0) {
+                        chvAuditPage = (req.body.chvAuditPage as string).trim();
+                    } 
+                    if (errorMessages.length > 0) {
                         context.res = {
-                            status: 400,
-                            body: 'Invalid  Information'
+                            status: 400, 
+                            body: errorMessages,
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
                         };
                         return;
                     }
-                    */
                     try {
+                        await dbTableOperator.upsertAuditPage(intAuditPageID, chvAuditPageName, chvAuditSection, chvAuditPage);
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: 'Audit page successfully processed'
+                        };
 
                     } catch(e) {
                         context.log(e);
@@ -729,22 +755,36 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
                         body: result
                     };
                 } else if (req.method === 'POST') {
-                    /*
-                    if (req.body. && Number.isInteger(+req.body.)) {
-                         = +req.body.
+                    let intCarePlanAreaID = 0;
+                    let chvCarePlanArea:string;
+                    let chvCarePlanAreaDescription:string = null;
+                    if (req.body.intCarePlanAreaID && Number.isInteger(+req.body.intCarePlanAreaID)) {
+                        intCarePlanAreaID = +req.body.intCarePlanAreaID;
                     }
-                    if (req.body. && (req.body. as string).trim().length > 0) {
-                         = (req.body. as string).trim();
+                    if (req.body.chvCarePlanAreaDescription && (req.body.chvCarePlanAreaDescription as string).trim().length > 0) {
+                        chvCarePlanAreaDescription = (req.body.chvCarePlanAreaDescription as string).trim();
+                    }
+                    if (req.body.chvCarePlanArea && (req.body.chvCarePlanArea as string).trim().length > 0) {
+                        chvCarePlanArea = (req.body.chvCarePlanArea as string).trim();
                     } else {
+                        errorMessages.push({
+                            error: 'Invalid Care Plan Area submitted'
+                        });
+                    } 
+                    if (errorMessages.length > 0) {
                         context.res = {
                             status: 400,
-                            body: 'Invalid  Information'
+                            body: errorMessages
                         };
-                        return;
                     }
-                    */
+                    
                     try {
-
+                        await dbTableOperator.upsertCarePlanAreas(intCarePlanAreaID, chvCarePlanArea,chvCarePlanAreaDescription);
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: 'Care Plan Area successfully processed'
+                        };
                     } catch(e) {
                         context.log(e);
                         context.res = {
@@ -765,21 +805,33 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
                         body: result
                     };
                 } else if (req.method === 'POST') {
-                    /*
-                    if (req.body. && Number.isInteger(+req.body.)) {
-                         = +req.body.
+                    let intContactPersonForID = 0;
+                    let chvContactPersonFor:string;
+                    
+                    if (req.body.intContactPersonForID && Number.isInteger(+req.body.intContactPersonForID)) {
+                        intContactPersonForID = +req.body.intContactPersonForID;
                     }
-                    if (req.body. && (req.body. as string).trim().length > 0) {
-                         = (req.body. as string).trim();
+                    if (req.body.chvContactPersonFor && (req.body.chvContactPersonFor as string).trim().length > 0) {
+                        chvContactPersonFor = (req.body.chvContactPersonFor as string).trim();
                     } else {
+                        errorMessages.push({
+                            error: 'Invalid chvContactPersonFor Submitted'
+                        });                        
+                    }
+                    if (errorMessages.length > 0) {
                         context.res = {
                             status: 400,
-                            body: 'Invalid  Information'
+                            body: errorMessages
                         };
                         return;
                     }
-                    */
                     try {
+                        await dbTableOperator.upsertContactPersonFors(intContactPersonForID, chvContactPersonFor);
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: 'Contact Person Fors successfully processed'
+                        };
 
                     } catch(e) {
                         context.log(e);
@@ -801,9 +853,32 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
                         body: result
                     };
                 } else if (req.method === 'POST') {
-
+                    let intContactPersonTypeID = 0;
+                    let chvContactPersonType:string;
+                    if (req.body.intContactPersonTypeID && Number.isInteger(+req.body.intContactPersonTypeID)) {
+                        intContactPersonTypeID = +req.body.intContactPersonTypeID;
+                    }
+                    if (req.body.chvContactPersonType && (req.body.chvContactPersonType as string).trim().length > 0) {
+                        chvContactPersonType = (req.body.chvContactPersonType as string).trim();
+                    } else {
+                        errorMessages.push({
+                            error: 'Invalid chvContactPersonType Submitted'
+                        });                        
+                    }
+                    if (errorMessages.length > 0) {
+                        context.res = {
+                            status: 400,
+                            body: errorMessages
+                        };
+                        return;
+                    }
                     try {
-
+                        await dbTableOperator.upsertContactPersonTypes(intContactPersonTypeID, chvContactPersonType);
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: 'Contact Person Type successfully processed'
+                        };
                     } catch(e) {
                         context.log(e);
                         context.res = {
@@ -824,7 +899,27 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
                         body: result
                     };
                 } else if (req.method === 'POST') {
+                    let intContactSupplierForID = 0;
+                    let chvContactSupplierFor:string;
+                    
+                    if (req.body.intContactSupplierForID && Number.isInteger(+req.body.intContactSupplierForID)) {
+                        intContactSupplierForID = +req.body.intContactSupplierForID;
+                    }
+                    if (req.body.chvContactSupplierFor && (req.body.chvContactSupplierFor as string).trim().length > 0) {
+                        chvContactSupplierFor = (req.body.chvContactSupplierFor as string).trim();
+                    } else {
+                        errorMessages.push({
+                            error: 'Invalid chvContactSupplierFor submitted'
+                        });
+                    }
+                    
                     try {
+                        await dbTableOperator.upsertContactSupplierFors(intContactSupplierForID, chvContactSupplierFor);
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: 'Contact Suppliers For successfully processed'
+                        };
 
                     } catch(e) {
                         context.log(e);
@@ -836,10 +931,492 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
                     }
                 }
                 break;
-            case '':
+            case 'tlkpCountries':
                 if (req.method === 'GET') {
+                    try {
+                        let result = await dbTableOperator.getCountries();
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: result
+                        };
+                    } catch(e) {
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                    }
+                    
 
                 } else if (req.method === 'POST') {
+                    let intCountryID = 0;
+                    let chvCountryName:string;
+                    let chvNationality:string;
+                    let chvCountryFlagName:string;
+                    
+                    if (req.body.intCountryID && Number.isInteger(+req.body.intCountryID)) {
+                        intCountryID = +req.body.intCountryID;
+                    }
+                    
+                    if (req.body.chvCountryName && (req.body.chvCountryName as string).trim().length > 0) {
+                        chvCountryName = (req.body.chvCountryName as string).trim();
+                    } else {
+                        errorMessages.push({
+                            error: 'Invalid chvCountryName submitted'
+                        });
+                    }
+                    if (req.body.chvNationality && (req.body.chvNationality as string).trim().length > 0) {
+                        chvNationality = (req.body.chvNationality as string).trim();
+                    } else {
+                        errorMessages.push({
+                            error: 'Invalid chvNationality submitted'
+                        });
+                    }
+                    if (req.body.chvCountryFlagName && (req.body.chvCountryFlagName as string).trim().length > 0) {
+                            chvCountryFlagName = (req.body.chvCountryFlagName as string).trim();
+                    } else {
+                        errorMessages.push({
+                            error: 'Invalid chvCountryFlagName submitted'
+                        });
+                    }
+                    if (errorMessages.length > 0) {
+                        context.res = {
+                            status: 400,
+                            body: errorMessages
+                        };
+                        return;
+                    }
+                    try {
+                        await dbTableOperator.upsertCountries(intCountryID, chvCountryName, chvNationality, chvCountryFlagName);
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: 'Country operation successful'
+                        };
+                    } catch(e) {
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
+
+                }
+                break;
+            case 'tlkpContactSupplierTypes':
+                if (req.method === 'GET') {
+                    try {
+                        let result = await dbTableOperator.getContactSupplierTypes();
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: result
+                        };
+                    } catch(e) {
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                    }
+                } else if (req.method === 'POST') {
+                    let intContactSupplierTypeID = 0;
+                    let chvContactSupplierType:string;
+                    if (req.body.intContactSupplierTypeID && Number.isInteger(+req.body.intContactSupplierTypeID)) {
+                        intContactSupplierTypeID = +req.body.intContactSupplierTypeID;
+                    }
+                    if (req.body.chvContactSupplierType && (req.body.chvContactSupplierType as string).trim().length > 0) {
+                        chvContactSupplierType = (req.body.chvContactSupplierType as string).trim();
+                    } else {
+                        errorMessages.push({
+                            error: 'Invalid chvContactSupplierType submitted'
+                        });
+                    }
+                    if (errorMessages.length > 0) {
+                        context.res = {
+                            status: 400,
+                            body: errorMessages
+                        };
+                        return;
+                    }
+                    try {
+                        await dbTableOperator.upsertContactSupplierTypes(intContactSupplierTypeID, chvContactSupplierType);
+                        await dbTableOperator.closeConnection();
+
+                        context.res = {
+                            status: 200,
+                            body: 'Contact Supplier operation successful'
+                        };
+                    } catch(e) {
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
+
+                }
+                break;
+            case 'tblDepartments':
+                if (req.method === 'GET') {
+                    let tz = null;
+                    if (req.query.tz && Number.isInteger(+req.query.tz)) {
+                        tz = +req.body.tz;
+                    }
+                    try {
+                        let result = await dbTableOperator.getDepartments(tz);
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: result
+                        };
+                    } catch(e){
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
+
+                } else if (req.method === 'POST') {
+                    let intDepartmentID = 0;
+                    let chvDepartmentName:string;
+                    let intDepartmentIsActiveID = 1;
+                    let intDepartmentStaffRoleID = 0;
+                    let intDepartmentManagerID = 0;
+                    let chvDepartmentTeamsURL:string;
+                    let chvDepartmentEmailAddress:string = null;
+                    let chvDepartmentDescription:string = null;
+                    let intPersonID = 0
+
+                    if (req.body.intDepartmentID && Number.isInteger(+req.body.intDepartmentID)) {
+                        intDepartmentID = +req.body.intDepartmentID;
+                    }
+                    if (req.body.intDepartmentIsActiveID && Number.isInteger(+req.body.intDepartmentIsActiveID)) {
+                        intDepartmentIsActiveID = +req.body.intDepartmentIsActiveID;
+                    }
+                    if (req.body.chvDepartmentEmailAddress && (req.body.chvDepartmentEmailAddress as string).trim().length > 0) {
+                        chvDepartmentEmailAddress = (req.body.chvDepartmentEmailAddress as string).trim();
+                    }
+                    if (req.body.chvDepartmentDescription && (req.body.chvDepartmentDescription as string).trim().length > 0) {
+                        chvDepartmentDescription = (req.body.chvDepartmentDescription as string).trim();
+                    }
+
+                    if (req.body.intPersonID && Number.isInteger(+req.body.intPersonID) && +req.body.intPersonID > 0) {
+                        intPersonID = +req.body.intPersonID;
+                    } else {
+                        errorMessages.push({
+                            error: "Invalid intPersonID submitted"
+                        });
+                    }
+                    if (req.body.intDepartmentStaffRoleID && Number.isInteger(+req.body.intDepartmentStaffRoleID) && +req.body.intDepartmentStaffRoleID > 0) {
+                        intDepartmentStaffRoleID = +req.body.intDepartmentStaffRoleID;
+                    } else {
+                        errorMessages.push({
+                            error: "Invalid intDepartmentStaffRoleID submitted"
+                        });
+                    }
+                    if (req.body.intDepartmentManagerID && Number.isInteger(+req.body.intDepartmentManagerID) && +req.body.intDepartmentManagerID > 0) {
+                        intDepartmentManagerID = +req.body.intDepartmentManagerID;
+                    } else {
+                        errorMessages.push({
+                            error: "Invalid intDepartmentManagerID submitted"
+                        });
+                    }
+
+                    if (req.body.chvDepartmentName && (req.body.chvDepartmentName as string).trim().length > 0) {
+                        chvDepartmentName = (req.body.chvDepartmentName as string).trim();
+                    } else {
+                        errorMessages.push({
+                            error: "Invalid chvDepartmentName submitted"
+                        });
+                    }
+                    if (req.body.chvDepartmentTeamsURL && (req.body.chvDepartmentTeamsURL as string).trim().length > 0) {
+                        chvDepartmentTeamsURL = (req.body.chvDepartmentTeamsURL as string).trim();
+                    } else {
+                        errorMessages.push({
+                            error: "Invalid chvDepartmentTeamsURL submitted"
+                        });
+                    }
+                    /*
+                    if (req.body. && Number.isInteger(+req.body.)) {
+                        = +req.body.;
+                    }
+                    if (req.body. && (req.body. as string).trim().length > 0) {
+                        = (req.body. as string).trim();
+                    }
+                    */
+                    if (errorMessages.length > 0) {
+                        context.res = {
+                            status: 400,
+                            body: errorMessages
+                        };
+                        return;
+                    }
+                    try {
+                        await dbTableOperator.upsertDepartment(
+                            intDepartmentID,
+                            chvDepartmentName,
+                            intDepartmentIsActiveID,
+                            intDepartmentStaffRoleID,
+                            intDepartmentManagerID,
+                            chvDepartmentTeamsURL,
+                            chvDepartmentEmailAddress,
+                            chvDepartmentDescription,
+                            intPersonID
+                        );
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: 'Department operation successful'
+                        };
+
+                    } catch(e) {
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
+
+                }
+                break;
+            case 'tlkpEmploymentClassifications':
+                if (req.method === 'GET') {
+                    try {
+                        let result = await dbTableOperator.getEmploymentClassifications();
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: result
+                        };
+                    } catch(e){
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
+
+                } else if (req.method === 'POST') {
+                    let intEmploymentClassificationID = 0;
+                    let chvEmploymentClassification:string;
+                    let chvEmploymentClassificationAbrv:string;
+                    
+                    if (req.body.intEmploymentClassificationID && Number.isInteger(+req.body.intEmploymentClassificationID)) {
+                        intEmploymentClassificationID = +req.body.intEmploymentClassificationID;
+                    }
+                    if (req.body.chvEmploymentClassification && (req.body.chvEmploymentClassification as string).trim().length > 0) {
+                        chvEmploymentClassification = (req.body.chvEmploymentClassification as string).trim();
+                    } else {
+                        errorMessages.push({
+                            error: 'Invalid chvEmploymentClassification submitted'
+                        });
+                    }
+                    if (req.body.chvEmploymentClassificationAbrv && (req.body.chvEmploymentClassificationAbrv as string).trim().length > 0) {
+                        chvEmploymentClassificationAbrv = (req.body.chvEmploymentClassificationAbrv as string).trim();
+                    }else {
+                        errorMessages.push({
+                            error: 'Invalid chvEmploymentClassificationAbrv submitted'
+                        });
+                    }
+                    if (errorMessages.length > 0) {
+                        context.res = {
+                            status: 400,
+                            body: errorMessages
+                        };
+                        return;
+                    }
+
+                    try {
+                        await dbTableOperator.upsertEmploymentClassification(intEmploymentClassificationID, chvEmploymentClassification, chvEmploymentClassificationAbrv);
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: 'Employment Classifications operation successful'
+                        };
+                    } catch(e) {
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
+
+                }
+                break;
+            case 'tlkpEmploymentTypes':
+                if (req.method === 'GET') {
+                    try {
+                        let result = await dbTableOperator.getEmploymentTypes();
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: result
+                        };
+
+                    } catch(e){
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
+
+                } else if (req.method === 'POST') {
+                    let intEmploymentTypeID = 0;
+                    let intEmploymentClassificationID = 0;
+                    let chvEmploymentType:string;
+                    let intGrade = 0;
+
+                    if (req.body.intEmploymentTypeID && Number.isInteger(+req.body.intEmploymentTypeID)) {
+                        intEmploymentTypeID = +req.body.intEmploymentTypeID;
+                    }
+                    if (req.body.intGrade && Number.isInteger(+req.body.intGrade)) {
+                        intGrade = +req.body.intGrade;
+                    }
+                    if (req.body.intEmploymentClassificationID && Number.isInteger(+req.body.intEmploymentClassificationID)) {
+                        intEmploymentClassificationID = +req.body.intEmploymentClassificationID;
+                    } else {
+                        errorMessages.push({
+                            error: 'Invalid intEmploymentClassificationID submitted'
+                        });
+                    }
+                    if (req.body.chvEmploymentType && (req.body.chvEmploymentType as string).trim().length > 0) {
+                        chvEmploymentType = (req.body.chvEmploymentType as string).trim();
+                    } else {
+                        errorMessages.push({
+                            error: 'Invalid chvEmploymentType submitted'
+                        });
+                    }
+                    
+
+                    /*
+                    if (req.body. && Number.isInteger(+req.body.)) {
+                        = +req.body.;
+                    }
+                    if (req.body. && (req.body. as string).trim().length > 0) {
+                        = (req.body. as string).trim();
+                    }
+                    */
+                    try {
+                        await dbTableOperator.upsertEmploymentType(
+                            intEmploymentTypeID,
+                            intEmploymentClassificationID,
+                            chvEmploymentType,
+                            intGrade
+                        );
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: 'Employment Type Operation successful'
+                        };
+                    } catch(e) {
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
+
+                }
+                break;
+            case 'tlkpFileGroups':
+                if (req.method === 'GET') {
+                    try {
+                        let result = await dbTableOperator.getFileGroups();
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: result
+                        };
+
+                    } catch(e){
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
+
+                } else if (req.method === 'POST') {
+                    let intFileGroupID = 0;
+                    let chvFileGroupName:string;
+                    if (req.body.intFileGroupID && Number.isInteger(+req.body.intFileGroupID)) {
+                        intFileGroupID = +req.body.intFileGroupID;
+                    }
+                    if (req.body.chvFileGroupName && (req.body.chvFileGroupName as string).trim().length > 0) {
+                        chvFileGroupName = (req.body.chvFileGroupName as string).trim();
+                    } else {
+                        errorMessages.push({
+                            error: "Invalid chvFileGroupName submitted"
+                        });                        
+                    }
+                    if (errorMessages.length > 0) {
+                        context.res = {
+                            status: 400,
+                            body: errorMessages
+                        };
+                        return; 
+                    }
+
+                    
+                    try {
+                        await dbTableOperator.upsertFileGroups(intFileGroupID, chvFileGroupName);
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: 'FileGroup operation successful'
+                        };
+                    } catch(e) {
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
+
+                }
+                break;                          
+            case 'tblFundingDetails':
+                if (req.method === 'GET') {
+                    try {
+                        let result;
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: result
+                        };
+
+                    } catch(e){
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
+
+                } else if (req.method === 'POST') {
+                    /*
+                    if (req.body. && Number.isInteger(+req.body.)) {
+                        = +req.body.;
+                    }
+                    if (req.body. && (req.body. as string).trim().length > 0) {
+                        = (req.body. as string).trim();
+                    }
+                    */
                     try {
 
                     } catch(e) {
@@ -853,10 +1430,34 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
 
                 }
                 break;
-            case '':
+            case 'tblGroupServices':
                 if (req.method === 'GET') {
+                    try {
+                        let result;
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: result
+                        };
+
+                    } catch(e){
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
 
                 } else if (req.method === 'POST') {
+                    /*
+                    if (req.body. && Number.isInteger(+req.body.)) {
+                        = +req.body.;
+                    }
+                    if (req.body. && (req.body. as string).trim().length > 0) {
+                        = (req.body. as string).trim();
+                    }
+                    */
                     try {
 
                     } catch(e) {
@@ -873,8 +1474,32 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
             //=======================================================================    
             case '':
                 if (req.method === 'GET') {
+                    try {
+                        let result;
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: result
+                        };
+
+                    } catch(e){
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
 
                 } else if (req.method === 'POST') {
+                    /*
+                    if (req.body. && Number.isInteger(+req.body.)) {
+                        = +req.body.;
+                   }
+                   if (req.body. && (req.body. as string).trim().length > 0) {
+                        = (req.body. as string).trim();
+                   }
+                   */
                     try {
 
                     } catch(e) {
