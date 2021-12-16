@@ -3,9 +3,8 @@ import { DbTableOperator } from "../models/DbTableOperator";
 
 const httpTrigger: AzureFunction = async function (context: Context, req: HttpRequest): Promise<void> {
     let chvTableName = '';    
-    let dbTableOperator = new DbTableOperator();
-    let errorMessages:Array<Object> = [];
-
+    let dbTableOperator = new DbTableOperator(context);
+    let errorMessages:Array<Object> = [];    
     if(req.query.chvTableName || (req.body && req.body.chvTableName)) {
         chvTableName = (req.query.chvTableName || (req.body && req.body.chvTableName));        
 
@@ -1392,7 +1391,7 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
             case 'tblFundingDetails':
                 if (req.method === 'GET') {
                     try {
-                        let result;
+                        let result = await dbTableOperator.getFundingDetails();
                         await dbTableOperator.closeConnection();
                         context.res = {
                             status: 200,
@@ -1409,6 +1408,62 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
                     }
 
                 } else if (req.method === 'POST') {
+                    let intFundingID = 0;
+                    let intAccountFundingTypeID = 0; // REFERENCES dbo.tlkpAccountFundingTypes (intAccountFundingTypeID)
+                    let intAccountFundingDetailID = 0; //REFERENCES dbo.tlkpAccountFundingDetails (intAccountFundingDetailID)
+
+                    let amtCaseManagementFee:number = 0.0; // Case Management Fee
+                    let amtInvoiceDiscount:number = 0.0; // Invoice Discount
+                    let amtFundingValue:number = 0.0; // Funding Value
+                    let intPersonID = 0; //REFERENCES dbo.tblPersons (intPersonID)
+
+                    if (req.body.intFundingID && Number.isInteger(+req.body.intFundingID)) {
+                        intFundingID = +req.body.intFundingID;
+                    }
+                    
+                    if (req.body.intAccountFundingTypeID && Number.isInteger(+req.body.intAccountFundingTypeID) && +req.body.intAccountFundingTypeID > 0) {
+                        intAccountFundingTypeID = +req.body.intAccountFundingTypeID;
+                    } else {
+                        errorMessages.push({
+                            error: 'Invalid intAccountFundingTypeID submitted'
+                        });
+                    }
+                    if (req.body.intAccountFundingDetailID && Number.isInteger(+req.body.intAccountFundingDetailID) && +req.body.intAccountFundingDetailID > 0) {
+                        intAccountFundingDetailID = +req.body.intAccountFundingDetailID;
+                    } else {
+                        errorMessages.push({
+                            error: 'Invalid intAccountFundingDetailID submitted'
+                        });
+                    }
+                    if (req.body.intPersonID && Number.isInteger(+req.body.intPersonID) && +req.body.intPersonID > 0) {
+                        intPersonID = +req.body.intPersonID;
+                    } else {
+                        errorMessages.push({
+                            error: 'Invalid intPersonID submitted'
+                        });
+                    }
+
+                    
+                    if (req.body.amtCaseManagementFee && (req.body.amtCaseManagementFee).toString().match(/[A-Za-z\-\*\$()#&@~!`\=\+\*\^\%\$]/g) == null) {
+                        amtCaseManagementFee = parseFloat(req.body.amtCaseManagementFee);
+                    } 
+
+                    if (req.body.amtInvoiceDiscount && (req.body.amtInvoiceDiscount).toString().match(/[A-Za-z\-\*\$()#&@~!`\=\+\*\^\%\$]/g) == null) {
+                        amtInvoiceDiscount = parseFloat(req.body.amtInvoiceDiscount);
+                    } 
+
+                    if (req.body.amtFundingValue && (req.body.amtFundingValue).toString().match(/[A-Za-z\-\*\$()#&@~!`\=\+\*\^\%\$]/g) == null) {
+                        amtFundingValue = parseFloat(req.body.amtFundingValue);
+                    } 
+
+
+                    if (errorMessages.length > 0) {
+                        context.res = {
+                            status: 400,
+                            body: errorMessages
+                        };
+                        return; 
+                    }
                     /*
                     if (req.body. && Number.isInteger(+req.body.)) {
                         = +req.body.;
@@ -1418,7 +1473,20 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
                     }
                     */
                     try {
-
+                        await dbTableOperator.upsertFundingDetails(
+                            intFundingID,
+                            intAccountFundingTypeID,
+                            intAccountFundingDetailID,
+                            amtCaseManagementFee,
+                            amtInvoiceDiscount,
+                            amtFundingValue,
+                            intPersonID
+                        );
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: 'Funding Details operation successful'
+                        };
                     } catch(e) {
                         context.log(e);
                         context.res = {
@@ -1433,7 +1501,7 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
             case 'tblGroupServices':
                 if (req.method === 'GET') {
                     try {
-                        let result;
+                        let result = await dbTableOperator.getGroupServices();
                         await dbTableOperator.closeConnection();
                         context.res = {
                             status: 200,
@@ -1450,16 +1518,106 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
                     }
 
                 } else if (req.method === 'POST') {
+                    let intGroupServiceID = 0;
+                    let intServiceID = 0; // REFERENCES dbo.tblServices (intServiceID)
+                    let intServiceGroupID = 0; // REFERENCES dbo.tblServiceGroups (intServiceGroupID)
+                    let intPersonID = 0; // REFERENCES dbo.tblPersons (intPersonID)
+
+                    if (req.body.intServiceID && Number.isInteger(+req.body.intServiceID) && +req.body.intServiceID > 0) {
+                        intServiceID = +req.body.intServiceID;
+                    } else {
+                        errorMessages.push({
+                            error: 'Invalid intServiceID submitted'
+                        });                        
+                    }
+                    if (req.body.intServiceGroupID && Number.isInteger(+req.body.intServiceGroupID) && +req.body.intServiceGroupID > 0) {
+                        intServiceGroupID = +req.body.intServiceGroupID;
+                    } else {
+                        errorMessages.push({
+                            error: 'Invalid intServiceGroupID submitted'
+                        });                        
+                    }
+                    if (req.body.intPersonID && Number.isInteger(+req.body.intPersonID) && +req.body.intPersonID > 0) {
+                        intPersonID = +req.body.intPersonID;
+                    } else {
+                        errorMessages.push({
+                            error: 'Invalid intPersonID submitted'
+                        });                        
+                    }
+                    if (req.body.intGroupServiceID && Number.isInteger(+req.body.intGroupServiceID)) {
+                        intGroupServiceID = +req.body.intGroupServiceID;
+                    }
+                    if (errorMessages.length > 0) {
+                        context.res = {
+                            status: 400,
+                            body: errorMessages
+                        };
+                        return; 
+                    }
+
                     /*
-                    if (req.body. && Number.isInteger(+req.body.)) {
-                        = +req.body.;
+                    if (req.body.intGroupServiceID && Number.isInteger(+req.body.intGroupServiceID)) {
+                        intGroupServiceID = +req.body.intGroupServiceID;
                     }
                     if (req.body. && (req.body. as string).trim().length > 0) {
                         = (req.body. as string).trim();
                     }
                     */
                     try {
+                        await dbTableOperator.upsertGroupServices(
+                            intGroupServiceID,
+                            intServiceID,
+                            intServiceGroupID,
+                            intPersonID
+                        );
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: 'Group Services operation successful'
+                        };
+                    } catch(e) {
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
 
+                } else if (req.method === 'DELETE') {
+                    let intGroupServiceID = 0;
+                    let intPersonID = 0;
+                    if (req.body.intGroupServiceID && Number.isInteger(+req.body.intGroupServiceID) && +req.body.intGroupServiceID > 0) {
+                        intGroupServiceID = +req.body.intGroupServiceID;
+                    } else {
+                        errorMessages.push({
+                            error: "Invalid intGroupServiceID"
+                        });
+                    }
+                    if (req.body.intPersonID && Number.isInteger(+req.body.intPersonID) && +req.body.intPersonID > 0) {
+                        intPersonID = +req.body.intPersonID;
+                    } else {
+                        errorMessages.push({
+                            error: 'Invalid intPersonID submitted'
+                        });                        
+                    }
+                    if (errorMessages.length > 0) {
+                        context.res = {
+                            status: 400,
+                            body: errorMessages
+                        };
+                        return; 
+                    }
+                    try {
+                        await dbTableOperator.deleteGroupService(
+                            intGroupServiceID,                           
+                            intPersonID
+                        );
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: 'Group Services record deleted successful'
+                        };
                     } catch(e) {
                         context.log(e);
                         context.res = {
@@ -1471,6 +1629,668 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
 
                 }
                 break;
+            case 'tlkpIncidentActions':
+                if (req.method === 'GET') {
+                    try {
+                        let result = await dbTableOperator.getIncidentActions();
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: result
+                        };
+
+                    } catch(e){
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
+
+                } else if (req.method === 'POST') {
+                    let intIncidentActionID = 0;
+                    let chvIncidentAction:string;
+                    let chvIncidentActionDescription:string = null;
+                    if (req.body.intIncidentActionID && Number.isInteger(+req.body.intIncidentActionID)) {
+                        intIncidentActionID = +req.body.intIncidentActionID;
+                    }
+                    if (req.body.chvIncidentAction && (req.body.chvIncidentAction as string).trim().length > 0) {
+                        chvIncidentAction = (req.body.chvIncidentAction as string).trim();
+                    } else {
+                        errorMessages.push({
+                            error: "Invalid chvIncidentAction submitted"
+                        });
+                    }
+                    if (req.body.chvIncidentActionDescription && (req.body.chvIncidentActionDescription as string).trim().length > 0) {
+                        chvIncidentActionDescription = (req.body.chvIncidentActionDescription as string).trim();
+                    }
+                    if (errorMessages.length > 0) {
+                        context.res = {
+                            status: 400,
+                            body: errorMessages
+                        };
+                        return; 
+                    }
+                    try {
+                        await dbTableOperator.upsertIncidentAction(intIncidentActionID, chvIncidentAction, chvIncidentActionDescription);
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: 'Incident Action operation successful'
+                        };
+                    } catch(e) {
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
+
+                }
+                break;
+            case 'tblHealthConditions':
+                if (req.method === 'GET') {
+                    try {
+                        let result = await dbTableOperator.getHealthConditions();
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: result
+                        };
+
+                    } catch(e){
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
+
+                } else if (req.method === 'POST') {
+                    let intHealthConditionID = 0;
+                    let intIsActiveID = 1;
+                    let chlHealthConditionDescription:string = null;
+                    let intPersonID = 0;
+                    let chvHealthConditionName:string;
+
+                    if (req.body.intHealthConditionID && Number.isInteger(+req.body.intHealthConditionID)) {
+                        intHealthConditionID = +req.body.intHealthConditionID;
+                    }
+                    if (req.body.intIsActiveID && Number.isInteger(+req.body.intIsActiveID) && +req.body.intIsActiveID <= 0) {
+                        intIsActiveID = 0;
+                    }
+                    if (req.body.chlHealthConditionDescription && (req.body.chlHealthConditionDescription as string).trim().length > 0) {
+                        chlHealthConditionDescription = (req.body.chlHealthConditionDescription as string).trim();
+                    }
+                    if (req.body.chvHealthConditionName && (req.body.chvHealthConditionName as string).trim().length > 0) {
+                        chvHealthConditionName = (req.body.chvHealthConditionName as string).trim();
+                    } else {
+                        errorMessages.push({
+                            error: "Invalid chvHealthConditionName submitted"
+                        });
+                    }
+                    if (req.body.intPersonID && Number.isInteger(+req.body.intPersonID) && +req.body.intPersonID > 0) {
+                        intPersonID = +req.body.intPersonID;
+                    } else {
+                        errorMessages.push({
+                            error: "Invalid intPersonID submitted"
+                        });
+                    }
+                    if(errorMessages.length > 0){
+                        context.res = {
+                            status: 400,
+                            body: errorMessages
+                        };
+                        return; 
+                    }
+                    try {
+                        await dbTableOperator.upsertHealthConditions(
+                            intHealthConditionID,
+                            chvHealthConditionName,
+                            intIsActiveID,
+                            chlHealthConditionDescription,
+                            intPersonID
+                        );
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: 'Health Condition operation successful'
+                        };
+                    } catch(e) {
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
+
+                }
+                break;
+            case 'tlkpIncidentDamages':
+                    if (req.method === 'GET') {
+                        try {
+                            let result = await dbTableOperator.getIncidentDamages();
+                            await dbTableOperator.closeConnection();
+                            context.res = {
+                                status: 200,
+                                body: result
+                            };
+    
+                        } catch(e){
+                            context.log(e);
+                            context.res = {
+                                status: 400,
+                                body: e
+                            };
+                            return; 
+                        }
+    
+                    } else if (req.method === 'POST') {
+                        let intIncidentDamageID = 0;
+                        let chvIncidentDamage:string;
+                        let chvIncidentDamageDescription:string = null;
+
+                        if (req.body.intIncidentDamageID && Number.isInteger(+req.body.intIncidentDamageID)) {
+                            intIncidentDamageID = +req.body.intIncidentDamageID;
+                        }
+                        if (req.body.chvIncidentDamageDescription && (req.body.chvIncidentDamageDescription as string).trim().length > 0) {
+                            chvIncidentDamageDescription = (req.body.chvIncidentDamageDescription as string).trim();
+                        }
+                        if (req.body.chvIncidentDamage && (req.body.chvIncidentDamage as string).trim().length > 0) {
+                            chvIncidentDamage = (req.body.chvIncidentDamage as string).trim();
+                        } else {
+                            errorMessages.push({
+                                error: "Invalid chvIncidentDamage submitted"
+                            });
+                        }
+                        if(errorMessages.length > 0) {
+                            context.res = {
+                                status: 400,
+                                body: errorMessages
+                            };
+                            return;
+                        }
+                        try {
+                            await dbTableOperator.upsertIncidentDamages(intIncidentDamageID, chvIncidentDamage, chvIncidentDamageDescription);
+                            await dbTableOperator.closeConnection();
+                            context.res = {
+                                status: 200,
+                                body: "Incident Damages operation successful"
+                            };
+                        } catch(e) {
+                            context.log(e);
+                            context.res = {
+                                status: 400,
+                                body: e
+                            };
+                            return; 
+                        }
+    
+                    }
+                    break;
+            case 'tlkpIncidentDetailTypes':
+                if (req.method === 'GET') {
+                    try {
+                        let result = await dbTableOperator.getIncidentDetailTypes();
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: result
+                        };
+
+                    } catch(e){
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
+
+                } else if (req.method === 'POST') {
+                    let intIncidentDetailTypeID = 0;
+                    let chvIncidentDetailType:string;
+                    let chvIncidentDetailTypeDescription:string = null;
+                    if (req.body.intIncidentDetailTypeID && Number.isInteger(+req.body.intIncidentDetailTypeID)) {
+                        intIncidentDetailTypeID = +req.body.intIncidentDetailTypeID;
+                    }
+                    if (req.body.chvIncidentDetailTypeDescription && (req.body.chvIncidentDetailTypeDescription as string).trim().length > 0) {
+                        chvIncidentDetailTypeDescription = (req.body.chvIncidentDetailTypeDescription as string).trim();
+                    } else {
+                        errorMessages.push({
+                            error: "Invalid chvIncidentDetailTypeDescription submitted"
+                        });
+                    }
+                    if (req.body.chvIncidentDetailType && (req.body.chvIncidentDetailType as string).trim().length > 0) {
+                        chvIncidentDetailType = (req.body.chvIncidentDetailType as string).trim();
+                    } else {
+                        errorMessages.push({
+                            error: "Invalid chvIncidentDetailType submitted"
+                        });
+                    }
+                    if (errorMessages.length > 0) {
+                        context.res = {
+                            status: 400,
+                            body: errorMessages
+                        };
+                        return; 
+                    }
+                    try {
+                        await dbTableOperator.upsertIncidentDetailTypes(intIncidentDetailTypeID,
+                            chvIncidentDetailType,
+                            chvIncidentDetailTypeDescription
+                        );
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: "Incident Detail Type operation successful"
+                        };
+                    } catch(e) {
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
+
+                }
+                break;
+            case 'tlkpIncidentEscalationPathways':
+                if (req.method === 'GET') {
+                    try {
+                        let result = await dbTableOperator.getIncidentEscalationPathways();
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: result
+                        };
+
+                    } catch(e){
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
+
+                } else if (req.method === 'POST') {
+                    let intIncidentEscalationPathwayID = 0;
+                    let chvIncidentEscalationPathway:string = null;
+                    let chvIncidentEscalationPathwayDescription:string = null;
+
+                    if (req.body.intIncidentEscalationPathwayID && Number.isInteger(+req.body.intIncidentEscalationPathwayID)) {
+                        intIncidentEscalationPathwayID = +req.body.intIncidentEscalationPathwayID;
+                    }
+                    if (req.body.chvIncidentEscalationPathway && (req.body.chvIncidentEscalationPathway as string).trim().length > 0) {
+                        chvIncidentEscalationPathway = (req.body.chvIncidentEscalationPathway as string).trim();
+                    } else {
+                        errorMessages.push({
+                            error: "Invalid chvIncidentEscalationPathway submitted"
+                        });
+                    }
+                    if (req.body.chvIncidentEscalationPathwayDescription && (req.body.chvIncidentEscalationPathwayDescription as string).trim().length > 0) {
+                        chvIncidentEscalationPathwayDescription = (req.body.chvIncidentEscalationPathwayDescription as string).trim();
+                    }
+                    if (errorMessages.length > 0) {
+                        context.res = {
+                            status: 400,
+                            body: errorMessages
+                        };
+                        return; 
+                    }
+                    
+                    try {
+                        await dbTableOperator.upsertIncidentEscalationPathway(
+                            intIncidentEscalationPathwayID,
+                            chvIncidentEscalationPathway,
+                            chvIncidentEscalationPathwayDescription);
+                        context.res = {
+                            status: 200,
+                            body: "Incident Escalation Pathways operation successful"
+                        };
+                    } catch(e) {
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
+
+                }
+                break;
+            case 'tlkpIncidentMemberTypes':
+                if (req.method === 'GET') {
+                    try {
+                        let result = await dbTableOperator.getIncidentMemberTypes();
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: result
+                        };
+
+                    } catch(e){
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
+
+                } else if (req.method === 'POST') {
+                    let intIncidentMemberTypeID = 0;
+                    let chvIncidentMemberType:string = null;
+                    let chvIncidentMemberTypeDescription:string = null;
+
+                    if (req.body.intIncidentMemberTypeID && Number.isInteger(+req.body.intIncidentMemberTypeID)) {
+                        intIncidentMemberTypeID = +req.body.intIncidentMemberTypeID;
+                    }
+                    if (req.body.chvIncidentMemberType && (req.body.chvIncidentMemberType as string).trim().length > 0) {
+                        chvIncidentMemberType = (req.body.chvIncidentMemberType as string).trim();
+                    } else {
+                        errorMessages.push({
+                            error: "Invalid chvIncidentMemberType submitted"
+                        });
+                    }
+                    if (req.body.chvIncidentMemberTypeDescription && (req.body.chvIncidentMemberTypeDescription as string).trim().length > 0) {
+                        chvIncidentMemberTypeDescription = (req.body.chvIncidentMemberTypeDescription as string).trim();
+                    }
+                    if (errorMessages.length > 0) {
+                        context.res = {
+                            status: 400,
+                            body: errorMessages
+                        };
+                        return; 
+                    }                    
+                    try {
+                        await dbTableOperator.upsertIncidentMemberTypes(
+                            intIncidentMemberTypeID,
+                            chvIncidentMemberType,
+                            chvIncidentMemberTypeDescription
+                        );
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: "Incident Member Types operation successful"
+                        };
+                    } catch(e) {
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
+
+                }
+                break;                
+            case 'tlkpIncidentOutcomes':
+                if (req.method === 'GET') {
+                    try {
+                        let result = await dbTableOperator.getIncidentOutcomes();
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: result
+                        };
+
+                    } catch(e){
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
+
+                } else if (req.method === 'POST') {
+                    let intIncidentOutcomeID = 0;
+                    let chvIncidentOutcome:string = null;
+                    let chvIncidentOutcomeDescription:string = null;
+                    
+                    if (req.body.intIncidentOutcomeID && Number.isInteger(+req.body.intIncidentOutcomeID)) {
+                        intIncidentOutcomeID = +req.body.intIncidentOutcomeID;
+                    }
+                    if (req.body.chvIncidentOutcome && (req.body.chvIncidentOutcome as string).trim().length > 0) {
+                        chvIncidentOutcome = (req.body.chvIncidentOutcome as string).trim();
+                    } else {
+                        errorMessages.push({
+                            error: "Invalid chvIncidentOutcome submitted"
+                        });
+                    }
+                    if (req.body.chvIncidentOutcomeDescription && (req.body.chvIncidentOutcomeDescription as string).trim().length > 0) {
+                        chvIncidentOutcomeDescription = (req.body.chvIncidentOutcomeDescription as string).trim();
+                    }
+                    if (errorMessages.length > 0) {
+                        context.res = {
+                            status: 400,
+                            body: errorMessages
+                        };
+                        return; 
+                    }
+                    
+                    try {
+                        await dbTableOperator.upsertIncidentOutcome(intIncidentOutcomeID, chvIncidentOutcome, chvIncidentOutcomeDescription);
+                        await dbTableOperator.closeConnection();
+
+                        context.res = {
+                            status: 200,
+                            body: "Incident Outcomes operation successful"
+                        };
+                    } catch(e) {
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
+
+                }
+                break;            
+            case 'tlkpIncidentRootCauses':
+                if (req.method === 'GET') {
+                    try {
+                        let result = await dbTableOperator.getIncidentRootCauses();
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: result
+                        };
+
+                    } catch(e){
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
+
+                } else if (req.method === 'POST') {
+                    let intIncidentRootCauseID = 0;
+                    let chvIncidentRootCause:string = null;
+                    let chvIncidentRootCauseDescription:string = null;
+
+                    
+                    if (req.body.intIncidentRootCauseID && Number.isInteger(+req.body.intIncidentRootCauseID)) {
+                        intIncidentRootCauseID= +req.body.intIncidentRootCauseID;
+                    }
+                    if (req.body.chvIncidentRootCause && (req.body.chvIncidentRootCause as string).trim().length > 0) {
+                        chvIncidentRootCause = (req.body.chvIncidentRootCause as string).trim();
+                    } else {
+                        errorMessages.push({
+                            error: "Invalid chvIncidentRootCause submitted"
+                        });
+                    }
+                    if (req.body.chvIncidentRootCauseDescription && (req.body.chvIncidentRootCauseDescription as string).trim().length > 0) {
+                        chvIncidentRootCauseDescription = (req.body.chvIncidentRootCauseDescription as string).trim();
+                    }
+                    if (errorMessages.length > 0) {
+                        context.res = {
+                            status: 400,
+                            body: errorMessages
+                        };
+                        return; 
+                    }
+                    
+                    try {
+                        await dbTableOperator.upsertIncidentRootCause(
+                            intIncidentRootCauseID,
+                            chvIncidentRootCause,
+                            chvIncidentRootCauseDescription
+                        );
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: "Incident Root Cause operation successful"
+                        };
+                    } catch(e) {
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
+
+                }
+                break;
+            case 'tlkpIncidentStatus':
+                if (req.method === 'GET') {
+                    try {
+                        let result = await dbTableOperator.getIncidentStatus();
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: result
+                        };
+
+                    } catch(e){
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
+
+                } else if (req.method === 'POST') {
+                    let intIncidentStatusID = 0;
+                    let chvIncidentStatus:string = null;                    
+                    if (req.body.intIncidentStatusID && Number.isInteger(+req.body.intIncidentStatusID)) {
+                        intIncidentStatusID = +req.body.intIncidentStatusID;
+                    }
+                    if (req.body.chvIncidentStatus && (req.body.chvIncidentStatus as string).trim().length > 0) {
+                        chvIncidentStatus = (req.body.chvIncidentStatus as string).trim();
+                    } else {
+                        errorMessages.push({
+                            error: "Invalid chvIncidentStatus submitted"
+                        });
+                    }
+                    if (errorMessages.length > 0) {
+                        context.res = {
+                            status: 400,
+                            body: errorMessages
+                        };
+                        return; 
+                    }
+                    
+                    try {
+                        await dbTableOperator.upsertIncidentStatus(
+                            intIncidentStatusID,
+                            chvIncidentStatus
+                        );
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: "Incident Status operation successful"
+                        };
+                    } catch(e) {
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
+
+                }
+                break;
+            case 'tlkpIncidentSeverities':
+                if (req.method === 'GET') {
+                    try {
+                        let result = await dbTableOperator.getIncidentSeverities();
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: result
+                        };
+
+                    } catch(e){
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
+
+                } else if (req.method === 'POST') {
+                    let intIncidentSeverityID = 0;
+                    let chvIncidentSeverity:string = null;
+                    let chvIncidentSeverityDescription:string = null;
+                    
+                    if (req.body.intIncidentSeverityID && Number.isInteger(+req.body.intIncidentSeverityID)) {
+                       intIncidentSeverityID = +req.body.intIncidentSeverityID;
+                    }
+                    if (req.body.chvIncidentSeverityDescription && (req.body.chvIncidentSeverityDescription as string).trim().length > 0) {
+                        chvIncidentSeverityDescription = (req.body.chvIncidentSeverityDescription as string).trim();
+                    }
+                    if (req.body.chvIncidentSeverity && (req.body.chvIncidentSeverity as string).trim().length > 0) {
+                        chvIncidentSeverity = (req.body.chvIncidentSeverity as string).trim();
+                    } else {
+                        errorMessages.push({
+                            error: "Invalid chvIncidentSeverity submitted"
+                        });
+                    }
+                    if (errorMessages.length > 0) {
+                        context.res = {
+                            status: 400,
+                            body: errorMessages
+                        };
+                        return; 
+                    }
+                    
+                    try {
+                        await dbTableOperator.upsertIncidentSeverity(
+                            intIncidentSeverityID,
+                            chvIncidentSeverity,
+                            chvIncidentSeverityDescription
+                        );
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: "Incident Severity operation successful"
+                        };
+                    } catch(e) {
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
+
+                }
+                break;     
             //=======================================================================    
             case '':
                 if (req.method === 'GET') {
@@ -1499,9 +2319,20 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
                    if (req.body. && (req.body. as string).trim().length > 0) {
                         = (req.body. as string).trim();
                    }
+                   if (errorMessages.length > 0) {
+                        context.res = {
+                            status: 400,
+                            body: errorMessages
+                        };
+                        return; 
+                    }
                    */
                     try {
 
+                        context.res = {
+                            status: 200,
+                            body: "operation successful"
+                        };
                     } catch(e) {
                         context.log(e);
                         context.res = {

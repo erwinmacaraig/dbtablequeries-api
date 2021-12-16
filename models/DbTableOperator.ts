@@ -7,8 +7,8 @@ export class DbTableOperator {
     private context:Context = null;
     private pool:Promise<sql.ConnectionPool> = sql.connect(configDb);
 
-    constructor() {
-
+    constructor(context=null) {
+        this.context = context;
     }
 
     public getAccountFundingDetails():Promise<Array<Object>>{
@@ -1388,12 +1388,727 @@ export class DbTableOperator {
 
     }
 
+    public getFundingDetails():Promise<Array<Object>>{
+        return new Promise((resolve, reject) => {
+            let query = `SELECT	intFundingID, intAccountFundingTypeID, chvAccountFundingType, intAccountFundingDetailID, chvAccountFundingDetail, amtCaseManagementFee, FORMAT(amtFundingValue, 'C') AS amtFundingValue, amtInvoiceDiscount, intFundingDetailModifiedByID, chvModifiedByName, FORMAT(dteFundingDetailModified, 'dd-MMM-yyyy') AS dteFundingDetailModified FROM vwFundingDetails;`;
+            this.pool.then(() => {
+                return sql.query(query);
+            }).then((result) => {
+                if (result.recordset.length == 0) {
+                    reject('No records found');
+                    return;
+                }
+                resolve(result.recordset);
+            }).catch(e => {
+                reject(e);
+            }); 
+        });
+    }
+
+    /**
+     * Creates/update record in the tblFundingDetails database table
+     * @param intFundingID primary key id for tblFundingDetails, 0 for new record, otherwise update existing record 
+     * @param intAccountFundingTypeID foreign key references dbo.tlkpAccountFundingTypes (intAccountFundingTypeID)
+     * @param intAccountFundingDetailID foreign key references dbo.tlkpAccountFundingDetails (intAccountFundingDetailID)
+     * @param amtCaseManagementFee float value case management fee
+     * @param amtInvoiceDiscount float value invoice discount  
+     * @param amtFundingValue float value funding amount
+     * @param intPersonID foreign key references dbo.tblPersons (intPersonID)
+     * @returns boolean true for successful operation
+     */
+    public upsertFundingDetails(intFundingID=0,
+        intAccountFundingTypeID = 0,
+        intAccountFundingDetailID=0,
+        amtCaseManagementFee=0.00,
+        amtInvoiceDiscount=0.00,
+        amtFundingValue=0.00,
+        intPersonID = 0
+    ):Promise<boolean>{
+        return new Promise((resolve, reject) => {
+            let caseManagementFee = 0.00; 
+            let invoiceDiscount = 0.00;
+            let fundingValue = 0.00;
+            
+            if (amtCaseManagementFee.toString().match(/[A-Za-z\-\*\$()#&@~!`\=\+\*\^\%\$]/g) == null) {
+                caseManagementFee = amtCaseManagementFee;
+            }
+            if (amtInvoiceDiscount.toString().match(/[A-Za-z\-\*\$()#&@~!`\=\+\*\^\%\$]/g) == null) {
+                invoiceDiscount = amtInvoiceDiscount;
+            }
+            if(amtFundingValue.toString().match(/[A-Za-z\-\*\$()#&@~!`\=\+\*\^\%\$]/g) == null) {
+                fundingValue = amtFundingValue
+            }
+
+            if (!Number.isInteger(intFundingID)) {
+                reject('Invalid intFundingID');
+                return;
+            }
+            if (!Number.isInteger(intAccountFundingTypeID)) {
+                reject('Invalid intAccountFundingTypeID');
+                return;
+            }
+            if (!Number.isInteger(intAccountFundingDetailID)) {
+                reject('Invalid intAccountFundingDetailID');
+                return;
+            }
+            if (!Number.isInteger(intPersonID) || intPersonID <= 0) {
+                reject('Invalid intPersonID');
+                return;
+            }
+
+            const queryRequest = new sql.Request();
+            queryRequest.input('intFundingID', sql.Int, intFundingID); 
+            queryRequest.input('intAccountFundingTypeID', sql.Int, intAccountFundingTypeID); 
+            queryRequest.input('intAccountFundingDetailID', sql.Int, intAccountFundingDetailID); 
+            queryRequest.input('amtCaseManagementFee', sql.Decimal(12,2), caseManagementFee); 
+            queryRequest.input('amtInvoiceDiscount', sql.Decimal(12,2), invoiceDiscount);             
+            queryRequest.input('amtFundingValue', sql.Decimal(12,2), fundingValue);
+            queryRequest.input('intModifiedByID', sql.Int, intPersonID);
+            
+
+            this.pool.then(() => {
+                return queryRequest.execute('spUpsertFundingDetails');
+            })
+            .then(() => {
+                resolve(true);
+            })
+            .catch((e) => {
+                reject(e);
+            });
+
+        });
+    }
+
+    public getGroupServices():Promise<Array<Object>>{
+        return new Promise((resolve, reject) => {
+            const queryRequest = new sql.Request();
+            queryRequest.input('intIsActiveID', sql.Int, 0); 
+            this.pool.then(() => {
+                return queryRequest.execute('spSelectGroupServices');
+            }).then((result) => {
+                if (result.recordset.length == 0) {
+                    reject('No records found');
+                    return;
+                }
+                resolve(result.recordset);
+            }).catch(e => {
+                reject(e);
+            });   
+        });
+    }
+
+    /**
+     * Create/update record in tblGroupServices database table
+     * @param intGroupServiceID tblGroupServices primary key, 0 for new record otherwise update existing record
+     * @param intServiceID foreign key references dev-iseekhome.dbo.tblServices (intServiceID)
+     * @param intServiceGroupID foreign key references dbo.tblServiceGroups (intServiceGroupID)
+     * @param intPersonID foreign key references dbo.tblPersons (intPersonID)
+     * @returns boolean true for successful operation
+     */
+    public upsertGroupServices(intGroupServiceID = 0, intServiceID = 0, intServiceGroupID = 0, intPersonID = 0):Promise<boolean>{
+        return new Promise((resolve, reject) => {            
+
+            if (!Number.isInteger(intGroupServiceID)) {
+                reject('Invalid intGroupServiceID');
+                return;
+            }
+            if (!Number.isInteger(intServiceID) || intServiceID <= 0) {
+                reject('Invalid intServiceID');
+                return;
+            }
+            if (!Number.isInteger(intServiceGroupID) || intServiceGroupID <= 0) {
+                reject('Invalid intServiceGroupID');
+                return;
+            }
+            if (!Number.isInteger(intPersonID) || intPersonID <= 0) {
+                reject('Invalid intPersonID');
+                return;
+            }
+
+            const queryRequest = new sql.Request();
+            queryRequest.input('intGroupServiceID', sql.Int, intGroupServiceID); 
+            queryRequest.input('intServiceID', sql.Int, intServiceID);
+            queryRequest.input('intServiceGroupID', sql.Int, intServiceGroupID);
+            queryRequest.input('intModifiedByID', sql.Int, intPersonID);
+            this.pool.then(() => {
+                return queryRequest.execute('spUpsertGroupServices');
+            })
+            .then(() => {
+                resolve(true);
+            })
+            .catch((e) => {
+                reject(e);
+            });
+
+        });
+
+    }
+
+    public deleteGroupService(intGroupServiceID=0, intPersonID = 0):Promise<boolean>{
+        return new Promise((resolve, reject) => {
+            if (!Number.isInteger(intGroupServiceID) || intGroupServiceID <= 0) {
+                reject('Invalid intGroupServiceID');
+                return;
+            }
+            if (!Number.isInteger(intPersonID) || intPersonID <= 0) {
+                reject('Invalid intPersonID');
+                return;
+            }
+            const queryRequest = new sql.Request();
+            queryRequest.input('intGroupServiceID', sql.Int, intGroupServiceID); 
+            queryRequest.input('intModifiedByID', sql.Int, intPersonID);
+            this.pool.then(() => {
+                return queryRequest.execute('spDeleteGroupService');
+            })
+            .then(() => {
+                resolve(true);
+            })
+            .catch((e) => {
+                reject(e);
+            });
+
+        });
+    }
+
+    public getHealthConditions():Promise<Array<Object>>{
+        return new Promise((resolve, reject) => {
+            let query = `SELECT DISTINCT tblHealthConditions.intHealthConditionID, tblHealthConditions.chvHealthConditionName, tblHealthConditions.intIsActiveID, tblHealthConditionDescriptions.chlHealthConditionDescription, tblHealthConditions.intHealthConditionModifiedByID, FORMAT(tblHealthConditions.dteHealthConditionModified, 'dd-MMM-yyyy') AS dteHealthConditionModified FROM tblHealthConditions  LEFT JOIN tblHealthConditionDescriptions ON tblHealthConditionDescriptions.intHealthConditionID = tblHealthConditions.intHealthConditionID;
+            `;
+            this.pool.then(() => {
+                return sql.query(query);
+            }).then((result) => {
+                if (result.recordset.length == 0) {
+                    reject('No records found');
+                    return;
+                }
+                resolve(result.recordset);
+            }).catch(e => {
+                reject(e);
+            }); 
+        });
+    }
+
+    /**
+     * creates/update record in tblHealthConditions database table
+     * @param intHealthConditionID primary key for tblHealthConditions 0 for new record, otherwise update existing record
+     * @param chvHealthConditionName string value for health condition name
+     * @param intIsActiveID integer value indicating active status, 0 for inactive else active
+     * @param chlHealthConditionDescription string value describing/supporting the health condition
+     * @param intPersonID foreign key referencing dbo.tblPersons(intPersonID)
+     * @returns boolean true for successful operation
+     */
+    public upsertHealthConditions(intHealthConditionID = 0,
+        chvHealthConditionName='',
+        intIsActiveID=0,
+        chlHealthConditionDescription='',
+        intPersonID = 0
+    ):Promise<boolean>{
+        return new Promise((resolve, reject) => {
+            if (!Number.isInteger(intIsActiveID)) {
+                reject('Invalid intIsActiveID');
+                return;
+            }
+            if (!Number.isInteger(intPersonID) || intPersonID <= 0) {
+                reject('Invalid intPersonID');
+                return;
+            }
+            if (!Number.isInteger(intHealthConditionID)) {
+                reject('Invalid intHealthConditionID');
+                return;
+            }
+            if (chvHealthConditionName == null || chvHealthConditionName.trim().length == 0) {
+                reject('Invalid chvHealthConditionName information');
+                return;
+            }
+
+            const queryRequest = new sql.Request();
+            queryRequest.input('intHealthConditionID', sql.Int, intHealthConditionID); 
+            queryRequest.input('chvHealthConditionName', sql.NVarChar, chvHealthConditionName); 
+            queryRequest.input('chlHealthConditionDescription', sql.NVarChar, chlHealthConditionDescription); 
+            queryRequest.input('intIsActiveID', sql.Int, intIsActiveID);
+            queryRequest.input('intModifiedByID', sql.Int, intPersonID);
+            this.pool.then(() => {
+                return queryRequest.execute('spUpsertHealthConditions');
+            })
+            .then(() => {
+                resolve(true);
+            })
+            .catch((e) => {
+                reject(e);
+            });
+
+        });
+    }
+
+    public getIncidentActions():Promise<Array<Object>>{
+        return new Promise((resolve, reject) => {
+            let query = `SELECT intIncidentActionID, chvIncidentAction, chvIncidentActionDescription, FORMAT(dteIncidentActionModified, 'dd-MMM-yyyy') AS dteIncidentActionModified FROM tlkpIncidentActions ORDER BY chvIncidentAction;`;
+            this.pool.then(() => {
+                return sql.query(query);
+            }).then((result) => {
+                if (result.recordset.length == 0) {
+                    reject('No records found');
+                    return;
+                }
+                resolve(result.recordset);
+            }).catch(e => {
+                reject(e);
+            }); 
+        });
+    }
+
+    /**
+     * Creates/update record in tlkpIncidentActions database table
+     * @param intIncidentActionID primary key for tlkpIncidentActions database table, 0 for new record otherwise update existing record 
+     * @param chvIncidentAction string value for the incident
+     * @param chvIncidentActionDescription string value for describing the incident
+     * @returns boolean true for successful operation
+     */
+    public upsertIncidentAction(intIncidentActionID= 0, chvIncidentAction:string=null, chvIncidentActionDescription:string = null):Promise<boolean>{
+        return new Promise((resolve, reject) => {
+            if (!Number.isInteger(intIncidentActionID)) {
+                reject('Invalid intIncidentActionID');
+                return;
+            }
+            
+            if (chvIncidentAction == null || chvIncidentAction.trim().length == 0) {
+                reject('Invalid chvIncidentAction information');
+                return;
+            }
+
+            const queryRequest = new sql.Request();
+            queryRequest.input('intIncidentActionID', sql.Int, intIncidentActionID); 
+            queryRequest.input('chvIncidentAction', sql.NVarChar, chvIncidentAction); 
+            queryRequest.input('chvIncidentActionDescription', sql.NVarChar, chvIncidentActionDescription);
+            this.pool.then(() => {
+                return queryRequest.execute('spUpsertIncidentAction');
+            })
+            .then(() => {
+                resolve(true);
+            })
+            .catch((e) => {
+                reject(e);
+            });
+
+        });
+    }
+
+    public getIncidentDamages():Promise<Array<Object>>{
+        return new Promise((resolve, reject) => {
+            let query = `SELECT intIncidentDamageID, chvIncidentDamage, chvIncidentDamageDescription, FORMAT(dteIncidentDamageModified, 'dd-MMM-yyyy') AS dteIncidentDamageModified FROM tlkpIncidentDamages ORDER BY chvIncidentDamage;`;
+            this.pool.then(() => {
+                return sql.query(query);
+            }).then((result) => {
+                if (result.recordset.length == 0) {
+                    reject('No records found');
+                    return;
+                }
+                resolve(result.recordset);
+            }).catch(e => {
+                reject(e);
+            }); 
+        });
+    }
+
+    /**
+     * Creates/updates record in tlkpIncidentDamages database table
+     * @param intIncidentDamageID primary key for tlkpIncidentDamages, 0 for new record, else update existing record
+     * @param chvIncidentDamage string value for incident damage
+     * @param chvIncidentDamageDescription string value describing the incident damage
+     * @returns boolean true for successful operation
+     */
+    public upsertIncidentDamages(intIncidentDamageID = 0, chvIncidentDamage:string=null, chvIncidentDamageDescription:string = null):Promise<boolean>{
+        return new Promise((resolve, reject) => {
+            if (!Number.isInteger(intIncidentDamageID)) {
+                reject('Invalid intIncidentDamageID');
+                return;
+            }
+            
+            if (chvIncidentDamage == null || chvIncidentDamage.trim().length == 0) {
+                reject('Invalid chvIncidentDamage information');
+                return;
+            }
+
+            const queryRequest = new sql.Request();
+            queryRequest.input('intIncidentDamageID', sql.Int, intIncidentDamageID); 
+            queryRequest.input('chvIncidentDamage', sql.NVarChar, chvIncidentDamage); 
+            queryRequest.input('chvIncidentDamageDescription', sql.NVarChar, chvIncidentDamageDescription);
+            this.pool.then(() => {
+                return queryRequest.execute('spUpsertIncidentDamages');
+            })
+            .then(() => {
+                resolve(true);
+            })
+            .catch((e) => {
+                reject(e);
+            });
+        });
+    }
+
+    public getIncidentDetailTypes():Promise<Array<Object>>{
+        return new Promise((resolve, reject) => {
+            let query = `SELECT intIncidentDetailTypeID, chvIncidentDetailType, chvIncidentDetailTypeDescription, FORMAT(dteIncidentDetailTypeModified, 'dd-MMM-yyyy') AS dteIncidentDetailTypeModified FROM tlkpIncidentDetailTypes ORDER BY chvIncidentDetailType;`;
+            this.pool.then(() => {
+                return sql.query(query);
+            }).then((result) => {
+                if (result.recordset.length == 0) {
+                    reject('No records found');
+                    return;
+                }
+                resolve(result.recordset);
+            }).catch(e => {
+                reject(e);
+            });
+        });
+    }
+
+    /**
+     * creates/upates record in tlkpIncidentDetailTypes database table
+     * @param intIncidentDetailTypeID primary key for tlkpIncidentDetailTypes 0 for new record otherwise updates existing record
+     * @param chvIncidentDetailType string value for incident detail type name
+     * @param chvIncidentDetailTypeDescription 
+     * @returns boolean true for successful operation
+     */
+    public upsertIncidentDetailTypes(intIncidentDetailTypeID=0, chvIncidentDetailType:string = null, chvIncidentDetailTypeDescription:string = null):Promise<boolean>{
+        return new Promise((resolve, reject) => {
+            if (!Number.isInteger(intIncidentDetailTypeID)) {
+                reject('Invalid intIncidentDetailTypeID');
+                return;
+            }
+            
+            if (chvIncidentDetailType == null || chvIncidentDetailType.trim().length == 0) {
+                reject('Invalid chvIncidentDetailType information');
+                return;
+            }
+
+            const queryRequest = new sql.Request();
+            queryRequest.input('intIncidentDetailTypeID', sql.Int, intIncidentDetailTypeID); 
+            queryRequest.input('chvIncidentDetailType', sql.NVarChar, chvIncidentDetailType); 
+            queryRequest.input('chvIncidentDetailTypeDescription', sql.NVarChar, chvIncidentDetailTypeDescription);
+            this.pool.then(() => {
+                return queryRequest.execute('spUpsertIncidentDetailTypes');
+            })
+            .then(() => {
+                resolve(true);
+            })
+            .catch((e) => {
+                reject(e);
+            });
+        });
+    }
+
+    public getIncidentEscalationPathways():Promise<Array<Object>>{
+        return new Promise((resolve, reject) => {
+            let query = `SELECT intIncidentEscalationPathwayID, chvIncidentEscalationPathway, chvIncidentEscalationPathwayDescription, FORMAT(dteIncidentEscalationPathwayModified, 'dd-MMM-yyyy') AS dteIncidentEscalationPathwayModified FROM tlkpIncidentEscalationPathways ORDER BY chvIncidentEscalationPathway;`;
+            this.pool.then(() => {
+                return sql.query(query);
+            }).then((result) => {
+                if (result.recordset.length == 0) {
+                    reject('No records found');
+                    return;
+                }
+                resolve(result.recordset);
+            }).catch(e => {
+                reject(e);
+            });
+        });
+    }
+
+    /**
+     * Create/update record in tlkpIncidentEscalationPathways database table
+     * @param intIncidentEscalationPathwayID 
+     * @param chvIncidentEscalationPathway 
+     * @param chvIncidentEscalationPathwayDescription 
+     * @returns 
+     */
+    public upsertIncidentEscalationPathway(intIncidentEscalationPathwayID=0, chvIncidentEscalationPathway:string=null, chvIncidentEscalationPathwayDescription:string = null):Promise<boolean>{
+        return new Promise((resolve, reject) => {
+            if (!Number.isInteger(intIncidentEscalationPathwayID)) {
+                reject('Invalid intIncidentEscalationPathwayID');
+                return;
+            }
+            
+            if (chvIncidentEscalationPathway == null || chvIncidentEscalationPathway.trim().length == 0) {
+                reject('Invalid chvIncidentEscalationPathway information');
+                return;
+            }
+
+            const queryRequest = new sql.Request();
+            queryRequest.input('intIncidentEscalationPathwayID', sql.Int, intIncidentEscalationPathwayID); 
+            queryRequest.input('chvIncidentEscalationPathway', sql.NVarChar, chvIncidentEscalationPathway);
+            queryRequest.input('chvIncidentEscalationPathwayDescription', sql.NVarChar, chvIncidentEscalationPathwayDescription);
+            this.pool.then(() => {
+                return queryRequest.execute('spUpsertIncidentEscalationPathway');
+            })
+            .then(() => {
+                resolve(true);
+            })
+            .catch((e) => {
+                reject(e);
+            });
+        });
+    }
+
+    public getIncidentMemberTypes():Promise<Array<Object>>{
+        return new Promise((resolve, reject) => {
+            let query = `SELECT intIncidentMemberTypeID, chvIncidentMemberType, chvIncidentMemberTypeDescription, FORMAT(dteIncidentMemberTypeModified, 'dd-MMM-yyyy') AS dteIncidentMemberTypeModified FROM tlkpIncidentMemberTypes ORDER BY chvIncidentMemberType;`;
+            this.pool.then(() => {
+                return sql.query(query);
+            }).then((result) => {
+                if (result.recordset.length == 0) {
+                    reject('No records found');
+                    return;
+                }
+                resolve(result.recordset);
+            }).catch(e => {
+                reject(e);
+            });
+        });
+    }
+
+    /**
+     * 
+     * @param intIncidentMemberTypeID primary key for database table tlkpIncidentMemberTypes
+     * @param chvIncidentMemberType string value for incident member type
+     * @param chvIncidentMemberTypeDescription string value for incident member type description
+     * @returns boolean true for successful operation
+     */
+    public upsertIncidentMemberTypes(intIncidentMemberTypeID = 0, chvIncidentMemberType:string = null, chvIncidentMemberTypeDescription:string = null):Promise<boolean>{
+        return new Promise((resolve, reject) => {
+            if (!Number.isInteger(intIncidentMemberTypeID)) {
+                reject('Invalid intIncidentMemberTypeID');
+                return;
+            }
+            
+            if (chvIncidentMemberType == null || chvIncidentMemberType.trim().length == 0) {
+                reject('Invalid chvIncidentEscalationPathway information');
+                return;
+            }
+
+            const queryRequest = new sql.Request();
+            queryRequest.input('intIncidentMemberTypeID', sql.Int, intIncidentMemberTypeID); 
+            queryRequest.input('chvIncidentMemberType', sql.NVarChar, chvIncidentMemberType);
+            queryRequest.input('chvIncidentMemberTypeDescription', sql.NVarChar, chvIncidentMemberTypeDescription);
+            this.pool.then(() => {
+                return queryRequest.execute('spUpsertIncidentMemberTypes');
+            })
+            .then(() => {
+                resolve(true);
+            })
+            .catch((e) => {
+                reject(e);
+            });
+        });
+    }
+
+    public getIncidentOutcomes():Promise<Array<Object>>{
+        return new Promise((resolve, reject) => {
+            let query = `SELECT intIncidentOutcomeID, chvIncidentOutcome, chvIncidentOutcomeDescription, FORMAT(dteIncidentOutcomeModified, 'dd-MMM-yyyy') AS dteIncidentOutcomeModified FROM tlkpIncidentOutcomes ORDER BY chvIncidentOutcome;`;
+            this.pool.then(() => {
+                return sql.query(query);
+            }).then((result) => {
+                if (result.recordset.length == 0) {
+                    reject('No records found');
+                    return;
+                }
+                resolve(result.recordset);
+            }).catch(e => {
+                reject(e);
+            });
+        });
+    }
+
+    public upsertIncidentOutcome(intIncidentOutcomeID = 0, chvIncidentOutcome:string = null, chvIncidentOutcomeDescription:string = null):Promise<boolean>{
+        return new Promise((resolve, reject) => {
+            if (!Number.isInteger(intIncidentOutcomeID)) {
+                reject('Invalid intIncidentOutcomeID');
+                return;
+            }
+            
+            if (chvIncidentOutcome == null || chvIncidentOutcome.trim().length == 0) {
+                reject('Invalid chvIncidentOutcome information');
+                return;
+            }
+
+            const queryRequest = new sql.Request();
+            queryRequest.input('intIncidentOutcomeID', sql.Int, intIncidentOutcomeID); 
+            queryRequest.input('chvIncidentOutcome', sql.NVarChar, chvIncidentOutcome);
+            queryRequest.input('chvIncidentOutcomeDescription', sql.NVarChar, chvIncidentOutcomeDescription);
+            this.pool.then(() => {
+                return queryRequest.execute('spUpsertIncidentOutcome');
+            })
+            .then(() => {
+                resolve(true);
+            })
+            .catch((e) => {
+                reject(e);
+            });
+        });
+    }
+
+    public getIncidentRootCauses():Promise<Array<Object>>{
+        return new Promise((resolve, reject) => {
+            let query = `SELECT intIncidentRootCauseID, chvIncidentRootCause, chvIncidentRootCauseDescription, FORMAT(dteIncidentRootCauseModified, 'dd-MMM-yyyy') AS dteIncidentRootCauseModified FROM tlkpIncidentRootCauses ORDER BY chvIncidentRootCause;`;
+            this.pool.then(() => {
+                return sql.query(query);
+            }).then((result) => {
+                if (result.recordset.length == 0) {
+                    reject('No records found');
+                    return;
+                }
+                resolve(result.recordset);
+            }).catch(e => {
+                reject(e);
+            });
+        });
+
+    }
+
+    /**
+     * creates/update record in tlkpIncidentRootCauses database table
+     * @param intIncidentRootCauseID primary key for tlkpIncidentRootCauses 0 for new record, else update existing record
+     * @param chvIncidentRootCause string value for incident root cause
+     * @param chvIncidentRootCauseDescription string value for root cause description
+     * @returns boolean true for successful operation
+     */
+    public upsertIncidentRootCause(intIncidentRootCauseID = 0, chvIncidentRootCause:string = null, chvIncidentRootCauseDescription:string = null):Promise<boolean>{
+        return new Promise((resolve, reject) => {
+            if (!Number.isInteger(intIncidentRootCauseID)) {
+                reject('Invalid intIncidentRootCauseID');
+                return;
+            }
+            
+            if (chvIncidentRootCause == null || chvIncidentRootCause.trim().length == 0) {
+                reject('Invalid chvIncidentRootCause information');
+                return;
+            }
+
+            const queryRequest = new sql.Request();
+            queryRequest.input('intIncidentRootCauseID', sql.Int, intIncidentRootCauseID); 
+            queryRequest.input('chvIncidentRootCause', sql.NVarChar, chvIncidentRootCause);
+            queryRequest.input('chvIncidentRootCauseDescription', sql.NVarChar, chvIncidentRootCauseDescription);
+            this.pool.then(() => {
+                return queryRequest.execute('spUpsertIncidentRootCause');
+            })
+            .then(() => {
+                resolve(true);
+            })
+            .catch((e) => {
+                reject(e);
+            });
+        });
+    }
+
+    public getIncidentStatus():Promise<Array<Object>>{
+        return new Promise((resolve, reject) => {
+            let query = `SELECT intIncidentStatusID, chvIncidentStatus, FORMAT(dteIncidentStatusModified, 'dd-MMM-yyyy') AS dteIncidentStatusModified FROM tlkpIncidentStatus ORDER BY chvIncidentStatus;`;
+            this.pool.then(() => {
+                return sql.query(query);
+            }).then((result) => {
+                if (result.recordset.length == 0) {
+                    reject('No records found');
+                    return;
+                }
+                resolve(result.recordset);
+            }).catch(e => {
+                reject(e);
+            });
+        });
+    }
+
+    /**
+     * Creates/Update record in tlkpIncidentStatus database table
+     * 
+     * @param intIncidentStatusID primary key for tlkpIncidentStatus, 0 for new record, else update existing record
+     * @param chvIncidentStatus string value for the status
+     * @returns boolean true for successful operation
+     */
+    public upsertIncidentStatus(intIncidentStatusID = 0, chvIncidentStatus:string = null):Promise<boolean>{
+        return new Promise((resolve, reject) => {
+            if (!Number.isInteger(intIncidentStatusID)) {
+                reject('Invalid intIncidentStatusID');
+                return;
+            }
+            
+            if (chvIncidentStatus == null || chvIncidentStatus.trim().length == 0) {
+                reject('Invalid chvIncidentStatus information');
+                return;
+            }
+
+            const queryRequest = new sql.Request();
+            queryRequest.input('intIncidentStatusID', sql.Int, intIncidentStatusID); 
+            queryRequest.input('chvIncidentStatus', sql.NVarChar, chvIncidentStatus);
+           
+            this.pool.then(() => {
+                return queryRequest.execute('spUpsertIncidentStatus');
+            })
+            .then(() => {
+                resolve(true);
+            })
+            .catch((e) => {
+                reject(e);
+            });
+        });
+    }
+
+    public getIncidentSeverities():Promise<Array<Object>>{
+        return new Promise((resolve, reject) => { 
+            let query = `SELECT intIncidentSeverityID, chvIncidentSeverity, chvIncidentSeverityDescription, FORMAT(dteIncidentSeverityModified, 'dd-MMM-yyyy') AS dteIncidentSeverityModified FROM tlkpIncidentSeverities ORDER BY chvIncidentSeverity;`;
+            this.pool.then(() => {
+                return sql.query(query);
+            }).then((result) => {
+                if (result.recordset.length == 0) {
+                    reject('No records found');
+                    return;
+                }
+                resolve(result.recordset);
+            }).catch(e => {
+                reject(e);
+            });
+        });
+    }
+     
+    /**
+     * Creates/update record in tlkpIncidentSeverities database table
+     * @param intIncidentSeverityID primary key for tlkpIncidentSeverities, 0 for new record, else update existing record
+     * @param chvIncidentSeverity string value for severity level
+     * @param chvIncidentSeverityDescription string value for severity level description
+     * @returns boolean true for successful operation
+     */
+    public upsertIncidentSeverity(intIncidentSeverityID = 0, chvIncidentSeverity:string = null, chvIncidentSeverityDescription:string = null):Promise<boolean>{
+        return new Promise((resolve, reject) => {
+            if (!Number.isInteger(intIncidentSeverityID)) {
+                reject('Invalid intIncidentSeverityID');
+                return;
+            }
+            
+            if (chvIncidentSeverity == null || chvIncidentSeverity.trim().length == 0) {
+                reject('Invalid chvIncidentSeverity information');
+                return;
+            }
+
+            const queryRequest = new sql.Request();
+            queryRequest.input('intIncidentSeverityID', sql.Int, intIncidentSeverityID); 
+            queryRequest.input('chvIncidentSeverity', sql.NVarChar, chvIncidentSeverity);
+            queryRequest.input('chvIncidentSeverityDescription', sql.NVarChar, chvIncidentSeverityDescription);
+            this.pool.then(() => {
+                return queryRequest.execute('spUpsertIncidentSeverity');
+            })
+            .then(() => {
+                resolve(true);
+            })
+            .catch((e) => {
+                reject(e);
+            });
+        });
+    }
+        
     /**
      * closes database connection
      */
      public closeConnection() {
         this.pool.then((pool) => {
             pool.close();
-        })
-    }
+        }); 
+    } 
 }
