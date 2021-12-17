@@ -2102,6 +2102,337 @@ export class DbTableOperator {
             });
         });
     }
+
+    public getIncidentTypes():Promise<Array<Object>>{
+        return new Promise((resolve, reject) => { 
+            let query = `SELECT intIncidentTypeID, chvIncidentType, chvIncidentTypeDescription, FORMAT(dteIncidentTypeModified, 'dd-MMM-yyyy') AS dteIncidentTypeModified FROM tlkpIncidentTypes ORDER BY chvIncidentType;`;
+            this.pool.then(() => {
+                return sql.query(query);
+            }).then((result) => {
+                if (result.recordset.length == 0) {
+                    reject('No records found');
+                    return;
+                }
+                resolve(result.recordset);
+            }).catch(e => {
+                reject(e);
+            });
+        });
+    }
+
+    /**
+     * Creates/update record in tlkpIncidentTypes database table
+     * @param intIncidentTypeID primary key for tlkpIncidentTypes, 0 for new record, else update existing record
+     * @param chvIncidentType string value for incident type
+     * @param chvIncidentTypeDescription string value description of incident type
+     * @returns boolean true for successful operation
+     */
+    public upsertIncidentTypes(intIncidentTypeID = 0, chvIncidentType:string = null, chvIncidentTypeDescription:string = null):Promise<boolean>{
+        return new Promise((resolve, reject) => {
+            if (!Number.isInteger(intIncidentTypeID)) {
+                reject('Invalid intIncidentTypeID');
+                return;
+            }
+            
+            if (chvIncidentType == null || chvIncidentType.trim().length == 0) {
+                reject('Invalid chvIncidentType information');
+                return;
+            }
+
+            const queryRequest = new sql.Request();
+            queryRequest.input('intIncidentTypeID', sql.Int, intIncidentTypeID); 
+            queryRequest.input('chvIncidentType', sql.NVarChar, chvIncidentType);
+            queryRequest.input('chvIncidentTypeDescription', sql.NVarChar, chvIncidentTypeDescription);
+            this.pool.then(() => {
+                return queryRequest.execute('spUpsertIncidentTypes');
+            })
+            .then(() => {
+                resolve(true);
+            })
+            .catch((e) => {
+                reject(e);
+            });
+        });
+    }
+
+    public getMeetingAgendas():Promise<Array<Object>>{
+        return new Promise((resolve, reject) => { 
+            let query = `SELECT intMeetingAgendaID, chvMeetingAgenda, FORMAT(dteMeetingAgendaModified, 'dd-MMM-yyyy') AS dteMeetingAgendaModified FROM tlkpMeetingAgendas ORDER BY chvMeetingAgenda;`;
+            this.pool.then(() => {
+                return sql.query(query);
+            }).then((result) => {
+                if (result.recordset.length == 0) {
+                    reject('No records found');
+                    return;
+                }
+                resolve(result.recordset);
+            }).catch(e => {
+                reject(e);
+            });
+        });
+    }
+
+    /**
+     * Creates/update record in tlkpMeetingAgendas database table
+     * @param intMeetingAgendaID primary key for tlkpMeetingAgendas, 0 for new record, else update existing record
+     * @param chvMeetingAgenda string value for meeting agenda
+     * @param chvMeetingAgendaDescription string value for meeting agenda description
+     * @returns boolean true for successful operation
+     */
+    public upsertMeetingAgendas(intMeetingAgendaID = 0, chvMeetingAgenda:string = null, chvMeetingAgendaDescription:string = null){
+        return new Promise((resolve, reject) => {
+            if (!Number.isInteger(intMeetingAgendaID)) {
+                reject('Invalid intMeetingAgendaID');
+                return;
+            }
+            
+            if (chvMeetingAgenda == null || chvMeetingAgenda.trim().length == 0) {
+                reject('Invalid chvMeetingAgenda information');
+                return;
+            }
+
+            const queryRequest = new sql.Request();
+            queryRequest.input('intMeetingAgendaID', sql.Int, intMeetingAgendaID); 
+            queryRequest.input('chvMeetingAgenda', sql.NVarChar, chvMeetingAgenda);
+            queryRequest.input('chvMeetingAgendaDescription', sql.NVarChar, chvMeetingAgendaDescription);
+            this.pool.then(() => {
+                return queryRequest.execute('spUpsertMeetingAgendas');
+            })
+            .then(() => {
+                resolve(true);
+            })
+            .catch((e) => {
+                reject(e);
+            });
+        });
+    }
+
+    public getOfficeLocations(tz:number = null): Promise<Array<Object>>{
+        return new Promise((resolve, reject) => {
+            const queryRequest = new sql.Request();
+            queryRequest.input('intTimeZone', sql.Int, tz);
+            this.pool.then(() => {
+                return queryRequest.execute('spSelectOfficeLocations');
+            })
+            .then((result) => {
+                if (result.recordset.length > 0) {
+                    resolve(result.recordset);
+                } else {
+                    reject('No records found.');
+                }
+                
+            })
+            .catch((e) => {
+                reject(e);
+            });
+        });
+    }
+
+    public getPersonalInterests():Promise<Array<Object>>{
+        return new Promise((resolve, reject) => {
+            let query = `SELECT intPersonalInterestID, chvPersonalInterest, FORMAT(dtePersonalInterestModified, 'dd-MMM-yyyy') AS dtePersonalInterestModified FROM tlkpPersonalInterests ORDER BY chvPersonalInterest;
+            `;
+            this.pool.then(() => {
+                return sql.query(query);
+            }).then((result) => {
+                if (result.recordset.length == 0) {
+                    reject('No records found');
+                    return;
+                }
+                resolve(result.recordset);
+            }).catch(e => {
+                reject(e);
+            });
+        });
+    }
+
+    /**
+     * Creates/updates record in tlkpPersonalInterests database table
+     * @param intPersonalInterestID primary key for tlkpPersonalInterests, 0 for new record, otherwise update existing record
+     * @param chvPersonalInterest string value for the personal interest
+     * @returns boolean true for a successful operation
+     */
+    public upsertPersonalInterests(intPersonalInterestID = 0, chvPersonalInterest:string = null):Promise<boolean>{
+        return new Promise((resolve, reject) => {
+            if (!Number.isInteger(intPersonalInterestID)) {
+                reject('Invalid intPersonalInterestID');
+                return;
+            }
+            
+            if (chvPersonalInterest == null || chvPersonalInterest.trim().length == 0) {
+                reject('Invalid chvPersonalInterest information');
+                return;
+            }
+
+            const queryRequest = new sql.Request();
+            queryRequest.input('intPersonalInterestID', sql.Int, intPersonalInterestID); 
+            queryRequest.input('chvPersonalInterest', sql.NVarChar, chvPersonalInterest);
+            this.pool.then(() => {
+                return queryRequest.execute('spUpsertPersonalInterests');
+            })
+            .then(() => {
+                resolve(true);
+            })
+            .catch((e) => {
+                reject(e);
+            });
+        });
+    }
+
+    public getPolicyFrameworks():Promise<Array<Object>>{
+        return new Promise((resolve, reject) => {
+            let query = `SELECT intPolicyFrameworkID, chvPolicyFrameworkName, chvPolicyFrameworkDescription, FORMAT(dtePolicyFrameworkModified, 'dd-MMM-yyyy') AS dtePolicyFrameworkModified FROM tlkpPolicyFrameworks ORDER BY chvPolicyFrameworkName;`;
+            this.pool.then(() => {
+                return sql.query(query);
+            }).then((result) => {
+                if (result.recordset.length == 0) {
+                    reject('No records found');
+                    return;
+                }
+                resolve(result.recordset);
+            }).catch(e => {
+                reject(e);
+            });
+        });
+    }
+
+    /**
+     * Creates/updates record in tlkpPolicyFrameworks database table
+     * @param intPolicyFrameworkID primary key for tlkpPolicyFrameworks, 0 for new record, else update existing record
+     * @param chvPolicyFrameworkName string value for framework name
+     * @param chvPolicyFrameworkDescription string value describing framework name
+     * @returns boolean true for successful operation
+     */
+    public upsertPolicyFrameworks(intPolicyFrameworkID = 0, chvPolicyFrameworkName:string = null, chvPolicyFrameworkDescription:string = null):Promise<boolean>{
+        return new Promise((resolve, reject) => {
+            if (!Number.isInteger(intPolicyFrameworkID)) {
+                reject('Invalid intPolicyFrameworkID');
+                return;
+            }
+            
+            if (chvPolicyFrameworkName == null || chvPolicyFrameworkName.trim().length == 0) {
+                reject('Invalid chvPolicyFrameworkName information');
+                return;
+            }
+            
+            const queryRequest = new sql.Request();
+            queryRequest.input('intPolicyFrameworkID', sql.Int, intPolicyFrameworkID); 
+            queryRequest.input('chvPolicyFrameworkName', sql.NVarChar, chvPolicyFrameworkName);
+            queryRequest.input('chvPolicyFrameworkDescription', sql.NVarChar, chvPolicyFrameworkDescription);
+            this.pool.then(() => {
+                return queryRequest.execute('spUpsertPolicyFrameworks');
+            })
+            .then(() => {
+                resolve(true);
+            })
+            .catch((e) => {
+                reject(e);
+            });
+        });
+    }
+
+    public getPolicySchedules():Promise<Array<Object>>{
+        return new Promise((resolve, reject) => {
+            let query = `SELECT intPolicyScheduleID, chvPolicyScheduleName, chvPolicyScheduleDescription, FORMAT(dtePolicyScheduleModified, 'dd-MMM-yyyy') AS dtePolicyScheduleModified FROM tlkpPolicySchedules ORDER BY chvPolicyScheduleName;`;
+            this.pool.then(() => {
+                return sql.query(query);
+            }).then((result) => {
+                if (result.recordset.length == 0) {
+                    reject('No records found');
+                    return;
+                }
+                resolve(result.recordset);
+            }).catch(e => {
+                reject(e);
+            });
+        });
+    }
+
+    /**
+     * Creates/update record in tlkpPolicySchedules database table
+     * @param intPolicyScheduleID primary key for tlkpPolicySchedules, 0 for new record else update existing record
+     * @param chvPolicyScheduleName string value for policy schedule name
+     * @param chvPolicyScheduleDescription string value describing the policy schedule name
+     * @returns boolean true for successful operation
+     */
+    public upsertPolicySchedules(intPolicyScheduleID = 0, chvPolicyScheduleName:string = null, chvPolicyScheduleDescription:string = null){
+        return new Promise((resolve, reject) => {
+            if (!Number.isInteger(intPolicyScheduleID)) {
+                reject('Invalid intPolicyScheduleID');
+                return;
+            }
+            
+            if (chvPolicyScheduleName == null || chvPolicyScheduleName.trim().length == 0) {
+                reject('Invalid chvPolicyScheduleName information');
+                return;
+            }
+            
+            const queryRequest = new sql.Request();
+            queryRequest.input('intPolicyScheduleID', sql.Int, intPolicyScheduleID); 
+            queryRequest.input('chvPolicyScheduleName', sql.NVarChar, chvPolicyScheduleName);
+            queryRequest.input('chvPolicyScheduleDescription', sql.NVarChar, chvPolicyScheduleDescription);
+            this.pool.then(() => {
+                return queryRequest.execute('spUpsertPolicySchedules');
+            })
+            .then(() => {
+                resolve(true);
+            })
+            .catch((e) => {
+                reject(e);
+            });
+        });
+    }
+
+    public getProgressNoteChoices():Promise<Array<Object>>{
+        return new Promise((resolve, reject) => {
+            let query = `SELECT intProgressNoteChoiceID, chvProgressNoteChoice, FORMAT(dteProgressNoteChoiceModified, 'dd-MMM-yyyy') AS dteProgressNoteChoiceModified FROM tlkpProgressNoteChoices ORDER BY chvProgressNoteChoice;`;
+            this.pool.then(() => {
+                return sql.query(query);
+            }).then((result) => {
+                if (result.recordset.length == 0) {
+                    reject('No records found');
+                    return;
+                }
+                resolve(result.recordset);
+            }).catch(e => {
+                reject(e);
+            });
+        });
+    }
+
+    /**
+     * Creates/update record in the tlkpProgressNoteChoices database table
+     * @param intProgressNoteChoiceID primary key for tlkpProgressNoteChoices, 0 for new record, else update existing record
+     * @param chvProgressNoteChoice string value for progress note choice
+     * @returns boolean true for successful operation
+     */
+    public upsertProgressNoteChoice(intProgressNoteChoiceID = 0, chvProgressNoteChoice:string = null){
+        return new Promise((resolve, reject) => {
+            if (!Number.isInteger(intProgressNoteChoiceID)) {
+                reject('Invalid intProgressNoteChoiceID');
+                return;
+            }
+            
+            if (chvProgressNoteChoice == null || chvProgressNoteChoice.trim().length == 0) {
+                reject('Invalid chvPolicyScheduleName information');
+                return;
+            }
+            
+            const queryRequest = new sql.Request();
+            queryRequest.input('intProgressNoteChoiceID', sql.Int, intProgressNoteChoiceID); 
+            queryRequest.input('chvProgressNoteChoice', sql.NVarChar, chvProgressNoteChoice);
+            
+            this.pool.then(() => {
+                return queryRequest.execute('spUpsertProgressNoteChoice');
+            })
+            .then(() => {
+                resolve(true);
+            })
+            .catch((e) => {
+                reject(e);
+            });
+        });
+    }
         
     /**
      * closes database connection

@@ -2291,6 +2291,547 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
 
                 }
                 break;     
+            case 'tlkpIncidentTypes':
+                if (req.method === 'GET') {
+                    try {
+                        let result = await dbTableOperator.getIncidentTypes();
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: result
+                        };
+
+                    } catch(e){
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
+
+                } else if (req.method === 'POST') {
+                    let intIncidentTypeID = 0;
+                    let chvIncidentType:string = null;
+                    let chvIncidentTypeDescription:string = null;                    
+
+                    
+                    if (req.body.intIncidentTypeID && Number.isInteger(+req.body.intIncidentTypeID)) {
+                        intIncidentTypeID = +req.body.intIncidentTypeID;
+                    }
+                    if (req.body.chvIncidentType && (req.body.chvIncidentType as string).trim().length > 0) {
+                        chvIncidentType = (req.body.chvIncidentType as string).trim();
+                    } else {
+                        errorMessages.push({
+                            error: "Invalid chvIncidentType submitted"
+                        });
+                    }
+                    if (req.body.chvIncidentTypeDescription && (req.body.chvIncidentTypeDescription as string).trim().length > 0) {
+                        chvIncidentTypeDescription = (req.body.chvIncidentTypeDescription as string).trim();
+                    }
+                    if (errorMessages.length > 0) {
+                        context.res = {
+                            status: 400,
+                            body: errorMessages
+                        };
+                        return; 
+                    }
+                   
+                    try {
+                        await dbTableOperator.upsertIncidentTypes(intIncidentTypeID, chvIncidentType, chvIncidentTypeDescription);
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: "Incident Types operation successful"
+                        };
+                    } catch(e) {
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
+
+                }
+                break; 
+            case 'tlkpMeetingAgendas':
+                if (req.method === 'GET') {
+                    try {
+                        let result = await dbTableOperator.getMeetingAgendas();
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: result
+                        };
+
+                    } catch(e){
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
+
+                } else if (req.method === 'POST') {
+                    let intMeetingAgendaID = 0;
+                    let chvMeetingAgenda:string = null;
+                    let chvMeetingAgendaDescription:string = null;
+
+                    
+                    if (req.body.intMeetingAgendaID && Number.isInteger(+req.body.intMeetingAgendaID)) {
+                        intMeetingAgendaID = +req.body.intMeetingAgendaID;
+                    }
+                    if (req.body.chvMeetingAgenda && (req.body.chvMeetingAgenda as string).trim().length > 0) {
+                        chvMeetingAgenda = (req.body.chvMeetingAgenda as string).trim();
+                    } else {
+                        errorMessages.push({
+                            error: "Invalid chvMeetingAgenda submitted"
+                        });
+                    }
+                    if (req.body.chvMeetingAgendaDescription && (req.body.chvMeetingAgendaDescription as string).trim().length > 0) {
+                        chvMeetingAgendaDescription = (req.body.chvMeetingAgendaDescription as string).trim();
+                    } 
+                    if (errorMessages.length > 0) {
+                        context.res = {
+                            status: 400,
+                            body: errorMessages
+                        };
+                        return; 
+                    }
+                    
+                    try {
+                        await dbTableOperator.upsertMeetingAgendas(intMeetingAgendaID, chvMeetingAgenda, chvMeetingAgendaDescription);
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: "Meeting Agendas operation successful"
+                        };
+                    } catch(e) {
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
+
+                }
+                break;
+            case 'tblOfficeLocations':
+                if (req.method === 'GET') {
+                    let tz:number = null;
+                    if (req.query.chvRemoteTimeZone && Number.isInteger(+req.query.chvRemoteTimeZone)) {
+                        tz = +req.query.chvRemoteTimeZone;
+                    }
+                    try {
+                        let result = await dbTableOperator.getOfficeLocations(tz);
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: result
+                        };
+
+                    } catch(e){
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
+
+                } else if (req.method === 'POST') {
+                    /*
+                    if (req.body. && Number.isInteger(+req.body.)) {
+                        = +req.body.;
+                    }
+                    if (req.body. && (req.body. as string).trim().length > 0) {
+                        = (req.body. as string).trim();
+                    }
+                    if (errorMessages.length > 0) {
+                        context.res = {
+                            status: 400,
+                            body: errorMessages
+                        };
+                        return; 
+                    }
+                    */
+                    try {
+
+                        context.res = {
+                            status: 200,
+                            body: "operation successful"
+                        };
+                    } catch(e) {
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
+
+                }
+                break;
+            case 'tlkpPersonalInterests':
+                if (req.method === 'GET') {
+                    try {
+                        let result = await dbTableOperator.getPersonalInterests();
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: result
+                        };
+
+                    } catch(e){
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
+
+                } else if (req.method === 'POST') {
+                    let intPersonalInterestID = 0;
+                    let chvPersonalInterest:string = null;
+                    
+                    if (req.body.intPersonalInterestID && Number.isInteger(+req.body.intPersonalInterestID)) {
+                        intPersonalInterestID = +req.body.intPersonalInterestID;
+                    }
+                    if (req.body.chvPersonalInterest && (req.body.chvPersonalInterest as string).trim().length > 0) {
+                        chvPersonalInterest = (req.body.chvPersonalInterest as string).trim();
+                    } else {
+                        errorMessages.push({
+                            error: "Invalid chvPersonalInterest submitted"
+                        });
+                    }
+                    if (errorMessages.length > 0) {
+                        context.res = {
+                            status: 400,
+                            body: errorMessages
+                        };
+                        return; 
+                    }
+                    
+                    try {
+                        await dbTableOperator.upsertPersonalInterests(intPersonalInterestID, chvPersonalInterest);
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: "Personal Interests operation successful"
+                        };
+                    } catch(e) {
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
+
+                }
+                break; 
+            case 'tlkpPolicyFrameworks':
+                if (req.method === 'GET') {
+                    try {
+                        let result = await dbTableOperator.getPolicyFrameworks();
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: result
+                        };
+
+                    } catch(e){
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
+
+                } else if (req.method === 'POST') {
+                    let intPolicyFrameworkID = 0;
+                    let chvPolicyFrameworkName:string = null;
+                    let chvPolicyFrameworkDescription:string = null;
+
+                    
+                    if (req.body.intPolicyFrameworkID && Number.isInteger(+req.body.intPolicyFrameworkID)) {
+                        intPolicyFrameworkID = +req.body.intPolicyFrameworkID;
+                    }
+                    if (req.body.chvPolicyFrameworkName && (req.body.chvPolicyFrameworkName as string).trim().length > 0) {
+                        chvPolicyFrameworkName = (req.body.chvPolicyFrameworkName as string).trim();
+                    } else {
+                        errorMessages.push({
+                            error: "Invalid chvPolicyFrameworkName submitted"
+                        });
+                    }
+                    if (req.body.chvPolicyFrameworkDescription && (req.body.chvPolicyFrameworkDescription as string).trim().length > 0) {
+                        chvPolicyFrameworkDescription = (req.body.chvPolicyFrameworkDescription as string).trim();
+                    }
+                    if (errorMessages.length > 0) {
+                        context.res = {
+                            status: 400,
+                            body: errorMessages
+                        };
+                        return; 
+                    }
+                    
+                    try {
+                        await dbTableOperator.upsertPolicyFrameworks(intPolicyFrameworkID, chvPolicyFrameworkName, chvPolicyFrameworkDescription);
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: "Policy Framework operation successful"
+                        };
+                    } catch(e) {
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
+
+                }
+                break;
+
+            case 'tlkpPolicySchedules':
+                if (req.method === 'GET') {
+                    try {
+                        let result = await dbTableOperator.getPolicySchedules();
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: result
+                        };
+
+                    } catch(e){
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
+
+                } else if (req.method === 'POST') {
+                    let intPolicyScheduleID = 0;
+                    let chvPolicyScheduleName:string = null;
+                    let chvPolicyScheduleDescription:string = null;
+
+                    if (req.body.intPolicyScheduleID && Number.isInteger(+req.body.intPolicyScheduleID)) {
+                       intPolicyScheduleID = +req.body.intPolicyScheduleID;
+                    }
+                    if (req.body.chvPolicyScheduleName && (req.body.chvPolicyScheduleName as string).trim().length > 0) {
+                        chvPolicyScheduleName = (req.body.chvPolicyScheduleName as string).trim();
+                    } else {
+                        errorMessages.push({
+                            error: "Invalid chvPolicyScheduleName submitted"
+                        });
+                    }
+                    if (req.body.chvPolicyScheduleDescription && (req.body.chvPolicyScheduleDescription as string).trim().length > 0) {
+                        chvPolicyScheduleDescription = (req.body.chvPolicyScheduleDescription as string).trim();
+                    }
+                    if (errorMessages.length > 0) {
+                        context.res = {
+                            status: 400,
+                            body: errorMessages
+                        };
+                        return; 
+                    }
+                    
+                    try {
+                        await dbTableOperator.upsertPolicySchedules(intPolicyScheduleID, chvPolicyScheduleName, chvPolicyScheduleDescription);
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: "Policy Schedule operation successful"
+                        };
+                    } catch(e) {
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
+
+                }
+                break;
+            case 'tlkpProgressNoteChoices':
+                if (req.method === 'GET') {
+                    try {
+                        let result = await dbTableOperator.getProgressNoteChoices();
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: result
+                        };
+
+                    } catch(e){
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
+
+                } else if (req.method === 'POST') {
+                    let intProgressNoteChoiceID = 0;
+                    let chvProgressNoteChoice:string = null;
+
+                    
+                    if (req.body.intProgressNoteChoiceID && Number.isInteger(+req.body.intProgressNoteChoiceID)) {
+                        intProgressNoteChoiceID = +req.body.intProgressNoteChoiceID;
+                    }
+                    if (req.body.chvProgressNoteChoice && (req.body.chvProgressNoteChoice as string).trim().length > 0) {
+                        chvProgressNoteChoice = (req.body.chvProgressNoteChoice as string).trim();
+                    } else {
+                        errorMessages.push({
+                            error: "chvProgressNoteChoice"
+                        });
+                    }
+                    if (errorMessages.length > 0) {
+                        context.res = {
+                            status: 400,
+                            body: errorMessages
+                        };
+                        return; 
+                    }
+                    
+                    try {
+                        await dbTableOperator.upsertProgressNoteChoice(intProgressNoteChoiceID, chvProgressNoteChoice);
+                        await dbTableOperator
+                        context.res = {
+                            status: 200,
+                            body: "Progress Note Choice operation successful"
+                        };
+                    } catch(e) {
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
+
+                }
+                break;
+            case 'tblProgressNoteTemplates':
+                if (req.method === 'GET') {
+                    try {
+                        let result;
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: result
+                        };
+
+                    } catch(e){
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
+
+                } else if (req.method === 'POST') {
+                    /*
+                    if (req.body. && Number.isInteger(+req.body.)) {
+                        = +req.body.;
+                    }
+                    if (req.body. && (req.body. as string).trim().length > 0) {
+                        = (req.body. as string).trim();
+                    }
+                    if (errorMessages.length > 0) {
+                        context.res = {
+                            status: 400,
+                            body: errorMessages
+                        };
+                        return; 
+                    }
+                    */
+                    try {
+
+                        context.res = {
+                            status: 200,
+                            body: "operation successful"
+                        };
+                    } catch(e) {
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
+
+                }
+                break;
+            case 'tblPublicHolidaySchedule':
+                if (req.method === 'GET') {
+                    try {
+                        let result;
+                        await dbTableOperator.closeConnection();
+                        context.res = {
+                            status: 200,
+                            body: result
+                        };
+
+                    } catch(e){
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
+
+                } else if (req.method === 'POST') {
+                    /*
+                    if (req.body. && Number.isInteger(+req.body.)) {
+                        = +req.body.;
+                    }
+                    if (req.body. && (req.body. as string).trim().length > 0) {
+                        = (req.body. as string).trim();
+                    }
+                    if (errorMessages.length > 0) {
+                        context.res = {
+                            status: 400,
+                            body: errorMessages
+                        };
+                        return; 
+                    }
+                    */
+                    try {
+
+                        context.res = {
+                            status: 200,
+                            body: "operation successful"
+                        };
+                    } catch(e) {
+                        context.log(e);
+                        context.res = {
+                            status: 400,
+                            body: e
+                        };
+                        return; 
+                    }
+
+                }
+                break;
+                                                         
+
+
+            
+            
+            
             //=======================================================================    
             case '':
                 if (req.method === 'GET') {
